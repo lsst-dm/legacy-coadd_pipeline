@@ -1,0 +1,74 @@
+#<?cfg paf dictionary ?>
+
+target: lsst.coadd.pipeline.ChiSquareStage
+
+definitions: {
+    #input clipboard keys
+    inputKeys: {
+        type: "policy"
+        dictionary: {
+            definitions: {
+                coaddDimensions: {
+                    type: "string"
+                    description: "clipboard key of desired coadd dimensions (an std::pair<int, int>)."
+                    minOccurs: 1
+                    maxOccurs: 1
+                }        
+                coaddWcs: {
+                    type: "string"
+                    description: "clipboard key of desired coadd WCS."
+                    minOccurs: 1
+                    maxOccurs: 1
+                }        
+                isLastExposure: {
+                    type: "string"
+                    description: "clipboard key of a boolean that is True only for the last exposure. If True, the coadd is written to the clipboard and the stage is reset to its initial state."
+                    minOccurs: 1
+                    maxOccurs: 1
+                }        
+                exposure: {
+                    type: "string"
+                    description: "clipboard key of a calibrated, background-subtracted exposure to add to the coadd."
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "backgroundSubtractedExposure"
+                }        
+            }
+        }
+        minOccurs: 1
+        maxOccurs: 1
+    }
+    
+    #output clipboard keys:
+    outputKeys: {
+        type: "policy"
+        dictionary: {
+            definitions: {
+                coadd: {
+                    type: "string"
+                    description: "clipboard key of coadd Exposure."
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "chiSquaredCoadd"
+                }        
+                backgroundKey: {
+                    type: "string"
+                    description: "clipboard key for coadd weight map Image"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "chiSquaredWeightMap"
+                }
+            }
+        }
+        maxOccurs: 1
+    }
+    
+    #parameters    
+    coaddPolicyPath: {
+        type: "string"
+        description: "path to coadd policy file; if blank then defaults are used"
+        minOccurs: 1 
+        maxOccurs: 1
+        default: ""
+    }
+}
