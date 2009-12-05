@@ -3,32 +3,27 @@
 target: lsst.coadd.pipeline.ChiSquareStage
 
 definitions: {
-    #input clipboard keys
     inputKeys: {
+        description: "Names of input items on the clipboard."
         type: "policy"
         dictionary: {
             definitions: {
-                coaddDimensions: {
+                event: {
                     type: "string"
-                    description: "clipboard key of desired coadd dimensions (an std::pair<int, int>)."
+                    description: "An event (dafBase.PropertySet). Required fields:
+                        * coaddWidth width of coadd (int); only read if the first exposure of a coadd
+                        * coaddHeight height of coadd (int); only read if the first exposure of a coadd
+                        * coaddWcs WCS for coadd (afwImage.Wcs); only read if the first exposure of a coadd
+                        * isLastExposure a boolean. If True then the stage will add the exposure
+                            to the coadd, output the coadd and reset itself.
+                            The next exposure, if any, will start a new coadd."
                     minOccurs: 1
                     maxOccurs: 1
-                }        
-                coaddWcs: {
-                    type: "string"
-                    description: "clipboard key of desired coadd WCS."
-                    minOccurs: 1
-                    maxOccurs: 1
-                }        
-                isLastExposure: {
-                    type: "string"
-                    description: "clipboard key of a boolean that is True only for the last exposure. If True, the coadd is written to the clipboard and the stage is reset to its initial state."
-                    minOccurs: 1
-                    maxOccurs: 1
+                    default: "coaddChiSquaredEvent"
                 }        
                 exposure: {
+                    description: "Calibrated, background-subtracted exposure to add to the coadd (afwImage.Exposure<x>)."
                     type: "string"
-                    description: "clipboard key of a calibrated, background-subtracted exposure to add to the coadd."
                     minOccurs: 1
                     maxOccurs: 1
                     default: "backgroundSubtractedExposure"
@@ -41,19 +36,20 @@ definitions: {
     
     #output clipboard keys:
     outputKeys: {
+        description: "Names if output items on the clipboard."
         type: "policy"
         dictionary: {
             definitions: {
                 coadd: {
+                    description: "Coadd exposure (afwImage.Exposure<x>)."
                     type: "string"
-                    description: "clipboard key of coadd Exposure."
                     minOccurs: 1
                     maxOccurs: 1
                     default: "chiSquaredCoadd"
                 }        
                 backgroundKey: {
+                    description: "Coadd weight map image (afwImage.ImageF)."
                     type: "string"
-                    description: "clipboard key for coadd weight map Image"
                     minOccurs: 1
                     maxOccurs: 1
                     default: "chiSquaredWeightMap"
@@ -63,12 +59,11 @@ definitions: {
         maxOccurs: 1
     }
     
-    #parameters    
-    coaddPolicyPath: {
-        type: "string"
-        description: "path to coadd policy file; if blank then defaults are used"
-        minOccurs: 1 
+    coaddPolicy: {
+        description: "Policy to control chi-squared coadd generation."
+        type: "policy"
+        dictionary: @ChiSquaredCoaddDictionary.paf
+        minOccurs: 1
         maxOccurs: 1
-        default: ""
     }
 }

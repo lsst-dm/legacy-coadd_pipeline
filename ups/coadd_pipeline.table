@@ -1,8 +1,7 @@
 setupRequired(pex_harness >= 3.4)
 setupRequired(pex_policy >= 3.4)
-setupRequired(afw >= 3.3.17)
-setupRequired(ip_diffim)
 setupRequired(coadd_utils)
+setupRequired(coadd_chisquared)
 
 envAppend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 envAppend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
