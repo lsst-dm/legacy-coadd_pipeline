@@ -8,12 +8,13 @@ import unittest
 
 import eups
 import lsst.daf.base as dafBase
-import lsst.pex.harness.Clipboard as pexClipboard
+import lsst.pex.harness as pexHarness
 import lsst.pex.logging as pexLog
 import lsst.pex.policy as pexPolicy
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.coadd.pipeline as coaddPipe
+from lsst.pex.harness import Clipboard, simpleStageTester
 from lsst.pex.harness.simpleStageTester import SimpleStageTester
 
 Verbosity = 5
@@ -48,11 +49,16 @@ def makeCoadd(exposurePathList, policy):
     if len(exposurePathList) == 0:
         print "No images specified; nothing to do"
         return
+
+    # until PR 1069 is fixed one cannot actually use SimpleStageTester to process multiple files
+    # meanwhile just call the process method directly
         
     # set up pipeline
     stage = coaddPipe.ChiSquareStage(policy)
-    tester = SimpleStageTester(stage)
-    tester.setDebugVerbosity(Verbosity)
+#     tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
+#     tester.setDebugVerbosity(Verbosity)
+    tempLog = pexLog.Log()
+    parallelStage = coaddPipe.ChiSquareStageParallel(policy, tempLog)
 
     # process exposures
     coadd = None
@@ -68,26 +74,24 @@ def makeCoadd(exposurePathList, policy):
         subtractBackground(exposure.getMaskedImage())
 
         # set up the clipboard
-        clipboard = pexClipboard.Clipboard()
+        clipboard = pexHarness.Clipboard.Clipboard()
         inPolicy = policy.get("inputKeys")
         clipboard.put(inPolicy.get("exposure"), exposure)
         event = dafBase.PropertySet()
         event.add("isLastExposure", isLast)
-        if isFirst:
-            coaddDimensions = exposure.getMaskedImage().getDimensions()
-            event.add("coaddWidth", coaddDimensions[0])
-            event.add("coaddHeight", coaddDimensions[1])
-            # this fails, so for now just use the WCS of the first exposure
-            #event.add("coaddWcs", exposure.getWcs())
         clipboard.put(inPolicy.get("event"), event)
 
         # run the stage
-        outWorker = tester.runWorker(clipboard)
+#        outClipboard = tester.runWorker(clipboard)
+        parallelStage.process(clipboard)
+        outClipboard = clipboard
     
         if isLast:
+            # one could put this code after the loop, but then it is less robust against
+            # code changes (e.g. making multiple coadds), early exit, etc.
             outPolicy = policy.get("outputKeys")
-            coadd = outWorker.get(outPolicy("coadd"))
-            weightMap = outWorker.get(outputPolicy("weightMap"))
+            coadd = outClipboard.get(outPolicy("coadd"))
+            weightMap = outClipboard.get(outputPolicy("weightMap"))
             return (coadd, weightMap)
 
     raise RuntimeError("Unexpected error; last exposure never run")

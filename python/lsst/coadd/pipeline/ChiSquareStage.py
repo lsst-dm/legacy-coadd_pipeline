@@ -14,16 +14,12 @@ class ChiSquareStageParallel(harnessStage.ParallelProcessing):
     Policy Dictionary:
     lsst/coadd/pipeline/policy/ChiSquareStageDictionary.paf
     """
-
-    def __del__(self):
-        print "***** __del__"
-
     def setup(self):
-        print "***** setup"
+#         print "***** setup"
         self.log = Log(self.log, "ChiSquareStage")
 
         policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "ChiSquareStageDictionary.paf", "policy")
-        defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
+        defPolicy = pexPolicy.Policy.createPolicy(policyFile, "policy", True)
         if self.policy is None:
             self.policy = pexPolicy.Policy()
         self.policy.mergeDefaults(defPolicy)
@@ -32,30 +28,28 @@ class ChiSquareStageParallel(harnessStage.ParallelProcessing):
 
     def process(self, clipboard):
         """Add exposure to chiSquared coadd"""
-        print "***** process clipboard keys:"
-        for key in clipboard.getKeys():
-            print "*", key
-        print "self.coadd=", self.coadd, "at start of process"
-
-        event = self.getFromClipboard(clipboard, "event")
-        print "event names"
-        for name in event.names():
-            print "*", name
+#         print "***** process ******"
+#         print "clipboard keys:"
+#         for key in clipboard.getKeys():
+#             print "*", key
+#         print "self.coadd=", self.coadd, "at start of process"
 
         exposure = self.getFromClipboard(clipboard, "exposure")
         
         if not self.coadd:
             self.log.log(Log.INFO, "First exposure: create coadd")
-            dimensions = [event.get(name) for name in ("coaddWidth", "coaddHeight")]
-#!!! until I know how to get a WCS into an event, just get the WCS from the exposure
-            self.log.log(Log.WARN, "Using WCS from exposure for now; get from event when I know how.")
-            #wcs = event.get("coaddWcs")
+            dimensions = exposure.getMaskedImage().getDimensions()
             wcs = exposure.getWcs()
             coaddPolicy = self.policy.get("coaddPolicy")
             self.coadd = coaddChiSq.Coadd(dimensions, wcs, coaddPolicy)
 
         self.log.log(Log.INFO, "Add exposure to coadd")
         self.coadd.addExposure(exposure)
+
+        event = self.getFromClipboard(clipboard, "event")
+#         print "event names"
+#         for name in event.names():
+#             print "*", name
 
         if event.get("isLastExposure"):
             self.log.log(Log.INFO, "Last exposure: write coadd to clipboard and reset to initial state")
@@ -64,8 +58,6 @@ class ChiSquareStageParallel(harnessStage.ParallelProcessing):
             self.addToClipboard(clipboard, "coadd", coaddExposure)
             self.addToClipboard(clipboard, "weightMap", weightMap)
             self.coadd = None
-
-        print "self.coadd=", self.coadd, "at end of process"
     
     def getFromClipboard(self, clipboard, key):
         """Retrieve an item from the clipboard.

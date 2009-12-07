@@ -11,9 +11,6 @@ definitions: {
                 event: {
                     type: "string"
                     description: "An event (dafBase.PropertySet). Required fields:
-                        * coaddWidth width of coadd (int); only read if the first exposure of a coadd
-                        * coaddHeight height of coadd (int); only read if the first exposure of a coadd
-                        * coaddWcs WCS for coadd (afwImage.Wcs); only read if the first exposure of a coadd
                         * isLastExposure a boolean. If True then the stage will add the exposure
                             to the coadd, output the coadd and reset itself.
                             The next exposure, if any, will start a new coadd."

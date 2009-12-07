@@ -1,0 +1,32 @@
+#<?cfg paf dictionary ?>
+#
+# Dictionary for lsst.coadd.chisquared.Coadd
+# this is a temporary copy of the authoritative version in coadd_chisquared;
+# remove it as soon as the middleware supports accessing the correct version from a stage dictionary.
+#
+definitions: {
+    allowedMaskPlanes: {
+        description: "Mask planes to allow (ignore) when rejecting masked pixels.
+            Specify as a space-separated list of mask plane names.
+            See Mask.cc in afwImage for a list of default names."
+        type: "string"
+        minOccurs: 1
+        maxOccurs: 1
+        default: "BAD SAT INTRP"
+    }        
+    doWarpExposures: {
+        description: "Warp exposures to match the reference exposure?
+            If false then all exposures are assumed to match the reference in WCS and size."
+        type: "bool"
+        minOccurs: 1
+        maxOccurs: 1
+        default: true
+    }        
+    warpingKernelName: {
+        description: "Name of warping kernel; see afwMath.makeWarpingKernel for allowed names."
+        type: "string"
+        minOccurs: 1
+        maxOccurs: 1
+        default: "lanczos4"
+    }        
+}
