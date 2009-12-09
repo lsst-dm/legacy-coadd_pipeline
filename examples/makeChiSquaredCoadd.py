@@ -15,7 +15,6 @@ import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
-from lsst.pex.harness.simpleStageTester import SimpleStageTester
 
 Verbosity = 5
 

@@ -19,10 +19,10 @@ class ParallelStage(harnessStage.ParallelProcessing):
         self.log = pexLog.Log(self.log, self.__class__.__name__)
 
         policyFile = pexPolicy.DefaultPolicyFile(self.packageName, self.policyDictionaryName, "policy")
-        defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
+        defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
         if self.policy is None:
             self.policy = pexPolicy.Policy()
-        self.policy.mergeDefaults(defPolicy)
+        self.policy.mergeDefaults(defPolicy.getDictionary())
     
     def getFromClipboard(self, clipboard, key):
         """Retrieve an item from the clipboard.
