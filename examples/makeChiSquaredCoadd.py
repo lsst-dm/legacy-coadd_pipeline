@@ -90,8 +90,8 @@ def makeCoadd(exposurePathList, policy):
             # one could put this code after the loop, but then it is less robust against
             # code changes (e.g. making multiple coadds), early exit, etc.
             outPolicy = policy.get("outputKeys")
-            coadd = outClipboard.get(outPolicy("coadd"))
-            weightMap = outClipboard.get(outputPolicy("weightMap"))
+            coadd = outClipboard.get(outPolicy.get("coadd"))
+            weightMap = outClipboard.get(outPolicy.get("weightMap"))
             return (coadd, weightMap)
 
     raise RuntimeError("Unexpected error; last exposure never run")
@@ -129,8 +129,8 @@ where:
     else:
         policy = pexPolicy.Policy()
 
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "ChiSquareStageDictionary.paf", "policy")
-    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "ChiSquareStage_dict.paf", "policy")
+    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
     policy.mergeDefaults(defPolicy)
     
     exposurePathList = []

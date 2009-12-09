@@ -44,7 +44,7 @@ definitions: {
                     maxOccurs: 1
                     default: "chiSquaredCoadd"
                 }        
-                backgroundKey: {
+                weightMap: {
                     description: "Coadd weight map image (afwImage.ImageF)."
                     type: "string"
                     minOccurs: 1
@@ -59,7 +59,7 @@ definitions: {
     coaddPolicy: {
         description: "Policy to control chi-squared coadd generation."
         type: "policy"
-        dictionary: @ChiSquaredCoaddDictionary.paf
+        dictionary: @ChiSquaredCoadd_dict.paf
         minOccurs: 1
         maxOccurs: 1
     }

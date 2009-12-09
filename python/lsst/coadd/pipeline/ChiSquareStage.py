@@ -1,28 +1,20 @@
 from lsst.pex.logging import Log
-import lsst.pex.policy as pexPolicy
-import lsst.pex.harness.stage as harnessStage
 import lsst.coadd.chisquared as coaddChiSq
+import BaseStage
 
-class ChiSquareStageParallel(harnessStage.ParallelProcessing):
+class ChiSquareStageParallel(BaseStage.ParallelStage):
     """
-    Description:
-        Pipeline stage to create a chi-squared coadd
-        
-    @todo get the following clipboard items from an event, rather than directly from the clipboard:
-    isLastExposure, width, height and WCS
+    Pipeline stage to create a chi-squared coadd
 
-    Policy Dictionary:
-    lsst/coadd/pipeline/policy/ChiSquareStageDictionary.paf
+    For now, the coadd has the same dimensions and WCS as the first exposure
+    or the next exposure after processing an event with isLastExposure = True.
+    
+    The coadd is written to the clipboard when an event is processed with isLastExposure = True.
     """
+    packageName = "coadd_pipeline"
+    policyDictionaryName = "ChiSquareStage_dict.paf"
     def setup(self):
-#         print "***** setup"
-        self.log = Log(self.log, "ChiSquareStage")
-
-        policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "ChiSquareStageDictionary.paf", "policy")
-        defPolicy = pexPolicy.Policy.createPolicy(policyFile, "policy", True)
-        if self.policy is None:
-            self.policy = pexPolicy.Policy()
-        self.policy.mergeDefaults(defPolicy)
+        BaseStage.ParallelStage.setup(self)
         
         self.coadd = None
 
@@ -58,49 +50,8 @@ class ChiSquareStageParallel(harnessStage.ParallelProcessing):
             self.addToClipboard(clipboard, "coadd", coaddExposure)
             self.addToClipboard(clipboard, "weightMap", weightMap)
             self.coadd = None
-    
-    def getFromClipboard(self, clipboard, key):
-        """Retrieve an item from the clipboard.
-        
-        I hope to replace this with improvements in the middleware.
-        
-        Inputs:
-        - clipbaord: the clipboard
-        - key: the name of the item; the name of the item on the clipboard is given by:
-            self.policy.get("inputKeys." + key)
-        
-        @return the item read from the clipboard
-        @raise KeyError or ? if full key is not found in policy or item is not found on clipboard.
-        """
-        policyKey = "inputKeys.%s" % (key,)
-        clipboardKey = self.policy.getString(policyKey)
-        if clipboardKey == None:
-            raise KeyError("Could not find %s in policy" % (policyKey,))
-        clipboardItem = clipboard.get(clipboardKey)
-        if clipboardItem == None:
-            raise KeyError("Could not find %s=%s on clipboard" % (policyKey, clipboardKey))
-        return clipboardItem
-    
-    def addToClipboard(self, clipboard, key, item):
-        """Put an item on the clipboard.
-        
-        I hope to replace this with improvements in the middleware.
-        
-        Outputs:
-        - clipbaord: the clipboard
-        - key: the name of the item; the name of the item on the clipboard is given by:
-            self.policy.get("outputKeys." + key)
-        - item: the item to add to the clipboard
-
-        @raise KeyError or ? if full key is not found in self.policy.
-        """
-        policyKey = "outputKeys.%s" % (key,)
-        clipboardKey = self.policy.getString(policyKey)
-        if clipboardKey == None:
-            raise KeyError("Could not find %s in policy" % (policyKey,))
-        clipboard.put(clipboardKey, item)
         
 # this is (unfortunately) required by SimpleStageTester; but not by the regular middleware
-class ChiSquareStage(harnessStage.Stage):
+class ChiSquareStage(BaseStage.Stage):
     parallelClass = ChiSquareStageParallel
 
