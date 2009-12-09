@@ -12,7 +12,7 @@ class ChiSquareStageParallel(baseStage.ParallelStage):
     The coadd is written to the clipboard when an event is processed with isLastExposure = True.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "ChiSquareStage_dict.paf"
+    policyDictionaryName = "chiSquareStage_dict.paf"
     def setup(self):
         baseStage.ParallelStage.setup(self)
         

@@ -9,9 +9,11 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
     The input exposures must have the same WCS to get reasonable results. This is NOT checked.
     
     @todo: modify to psf-match one exposure to a psf model instead of another exposure.
+    
+    @todo: should the psf-matching kernel be output instead of the kernel sum? I think so!
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "PsfMatchStage_dict.paf"
+    policyDictionaryName = "psfMatchStage_dict.paf"
     
     def setup(self):
         baseStage.ParallelStage.setup(self)

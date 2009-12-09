@@ -1,0 +1,94 @@
+#<?cfg paf dictionary ?>
+
+target: lsst.coadd.pipeline.PsfMatchStage
+
+definitions: {
+    inputKeys: {
+        description: "Names of input items on the clipboard."
+        type: "policy"
+        dictionary: {
+            definitions: {
+                exposure: {
+                    description: "Calibrated, background-subtracted exposure to warp and PSF-match
+                    to referenceExposure (afwImage.Exposure<x>)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "exposure"
+                }        
+                referenceExposure: {
+                    description: "Calibrated, background-subtracted reference exposure (afwImage.Exposure<x>)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "referenceExposure"
+                }        
+            }
+        }
+        minOccurs: 1
+        maxOccurs: 1
+    }
+    
+    #output clipboard keys:
+    outputKeys: {
+        description: "Names if output items on the clipboard."
+        type: "policy"
+        dictionary: {
+            definitions: {
+                warpedExposure: {
+                    description: "Warped (but not PSF-matched) exposure (afwImage.Exposure<x>)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "warpedExposure"
+                }        
+                psfMatchedExposure: {
+                    description: "Warped and PSF-matched exposure (afwImage.Exposure<x>)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "psfMatchedExposure"
+                }        
+                kernelSum: {
+                    description: "Sum of PSF-matching kernel at center of exposure (double)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "kernelSum"
+                }        
+            }
+        }
+        maxOccurs: 1
+    }
+
+   warpingKernelName: {
+       type: string
+       description: "Warping kernel for warping exposure to match referenceExposure"
+       maxOccurs: 1
+       default: "lanczos4"
+       allowed: {
+           value:        "bilinear"
+           description:  "bilinear interpolation"
+       }
+       allowed: {
+           value:        "lanczos3"
+           description:  "lanczos kernel of order 3"
+       }
+       allowed: {
+           value:        "lanczos4"
+           description:  "lanczos kernel of order 4"
+       }
+       allowed: {
+           value:        "lanczos5"
+           description:  "lanczos kernel of order 5"
+       }
+   }
+    
+    psfMatchPolicy: {
+        description: "Policy to control psf matching."
+        type: "policy"
+        dictionary: @psfMatch_dict.paf
+        minOccurs: 1
+        maxOccurs: 1
+    }
+}
