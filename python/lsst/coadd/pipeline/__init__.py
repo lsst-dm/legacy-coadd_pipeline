@@ -1,2 +1,2 @@
 from chiSquareStage import *
-# from psfMatchStage import *
+from psfMatchStage import *

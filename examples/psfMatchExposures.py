@@ -38,36 +38,31 @@ def subtractBackground(maskedImage):
     image -= bkgObj.getImageF()
     return bkgObj
 
-def makeCoadd(exposurePathList, policy):
-    """Make a coadd using ChiSquareStage
+def psfMatchExposures(exposurePathList, policy):
+    """Warp and psf-match a set of exposures to match a reference exposure
     
     Inputs:
-    - exposurePathList: a list of paths to calibrated science exposures
+    - exposurePathList: a list of paths to calibrated science exposures;
+        the first one is taken to be the reference (and so is not processed).
     - policy: policy to control the coaddition stage
     """
     if len(exposurePathList) == 0:
         print "No images specified; nothing to do"
         return
 
-    # until PR 1069 is fixed one cannot actually use SimpleStageTester to process multiple files
-    # meanwhile just call the process method directly
-        
     # set up pipeline
-    stage = coaddPipe.ChiSquareStage(policy)
-#     tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
-#     tester.setDebugVerbosity(Verbosity)
-    tempLog = pexLog.Log()
-    parallelStage = coaddPipe.ChiSquareStageParallel(policy, tempLog)
+    stage = coaddPipe.PsfMatchStage(policy)
+    tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
+    tester.setDebugVerbosity(Verbosity)
 
     # process exposures
-    coadd = None
-    lastInd = len(exposurePathList) - 1
-    for expInd, exposurePath in enumerate(exposurePathList):
-        isFirst = (expInd == 0)
-        isLast = (expInd == lastInd)
-
-        print "Processing exposure %d of %d: %s" % (expInd+1, lastInd+1, exposurePath)
+    referenceExposurePath = exposurePathList[0]
+    print "Reference exposure is: %s" % (referenceExposurePath,)
+    referenceExposure = afwImage.ExposureF(referenceExposurePath)
+    for exposurePath in exposurePathList[1:]:
+        print "Processing exposure: %s" % (exposurePath,)
         exposure = afwImage.ExposureF(exposurePath)
+        exposureName = os.path.basename(exposurePath)
 
         print "Subtract background"
         subtractBackground(exposure.getMaskedImage())
@@ -76,61 +71,48 @@ def makeCoadd(exposurePathList, policy):
         clipboard = pexHarness.Clipboard.Clipboard()
         inPolicy = policy.get("inputKeys")
         clipboard.put(inPolicy.get("exposure"), exposure)
-        event = dafBase.PropertySet()
-        event.add("isLastExposure", isLast)
-        clipboard.put(inPolicy.get("event"), event)
+        clipboard.put(inPolicy.get("referenceExposure"), referenceExposure)
 
         # run the stage
-#        outClipboard = tester.runWorker(clipboard)
-        parallelStage.process(clipboard)
-        outClipboard = clipboard
-    
-        if isLast:
-            # one could put this code after the loop, but then it is less robust against
-            # code changes (e.g. making multiple coadds), early exit, etc.
-            outPolicy = policy.get("outputKeys")
-            coadd = outClipboard.get(outPolicy.get("coadd"))
-            weightMap = outClipboard.get(outPolicy.get("weightMap"))
-            return (coadd, weightMap)
-
-    raise RuntimeError("Unexpected error; last exposure never run")
+        outClipboard = tester.runWorker(clipboard)
+        
+        outPolicy = policy.get("outputKeys")
+        warpedExposure = outClipboard.get(outPolicy.get("warpedExposure"))
+        psfMatchedExposure = outClipboard.get(outPolicy.get("psfMatchedExposure"))
+        
+        warpedExposure.writeFits("warped_%s" % (exposureName,))
+        psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', Verbosity)
-    helpStr = """Usage: makeCoadd.py coaddPath exposureList [policyPath]
+    helpStr = """Usage: psfMatchExposure.py exposureList [policyPath]
 
 where:
-- coaddPath is the desired name or path of the output coadd
 - exposureList is a file containing a list of:
     pathToExposure
   where:
   - pathToExposure is the path to an Exposure (without the final _img.fits)
   - the first exposure listed is the reference exposure:
-        its size and WCS are used for the coadd exposure
+        all other exposures are warped and PSF-matched to it.
+        Thus the reference exposure should have the worst PSF of the set.
   - empty lines and lines that start with # are ignored.
 - policyPath is the path to a policy file
 """
-    if len(sys.argv) not in (3, 4):
+    if len(sys.argv) not in (2, 3):
         print helpStr
         sys.exit(0)
     
-    outName = sys.argv[1]
-    if os.path.exists(outName + "_img.fits"):
-        print "Coadd file %s already exists" % (outName,)
-        sys.exit(1)
-    weightOutName = outName + "_weight.fits"
-    
-    exposureList = sys.argv[2]
+    exposureList = sys.argv[1]
 
-    if len(sys.argv) > 3:
-        policyPath = sys.argv[3]
+    if len(sys.argv) > 2:
+        policyPath = sys.argv[2]
         policy = pexPolicy.Policy(policyPath)
     else:
         policy = pexPolicy.Policy()
 
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquareStage_dict.paf", "policy")
-    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
-    policy.mergeDefaults(defPolicy)
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
+    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
+    policy.mergeDefaults(defPolicy.getDictionary())
     
     exposurePathList = []
     ImageSuffix = "_img.fits"
@@ -146,6 +128,4 @@ where:
                 continue
             exposurePathList.append(filePath)
 
-    coadd, weightMap = makeCoadd(exposurePathList, policy)
-    coadd.writeFits(outName)
-    weightMap.writeFits(weightOutName)
+    psfMatchExposures(exposurePathList, policy)

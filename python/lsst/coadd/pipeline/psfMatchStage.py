@@ -1,5 +1,5 @@
-import lsst.coadd.utils as coaddUtils
 import lsst.coadd.psfmatched as psfMatched
+import lsst.afw.math as afwMath
 import baseStage
 
 class PsfMatchStageParallel(baseStage.ParallelStage):
@@ -31,12 +31,14 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
         exposure = self.getFromClipboard(clipboard, "exposure")
         referenceExposure = self.getFromClipboard(clipboard, "referenceExposure")
         
-        warpedExposure, psfMatchedExposure, kernelSum, backgroundModel = psfMatched.warpAndPsfMatchExposure(
-            referenceExposure, exposure, self._warpingKernel, self.psfMatchPolicy)
+        warpedExposure, psfMatchedExposure, psfMatchingKernel, psfMatchingKernelSum, backgroundModel = \
+            psfMatched.warpAndPsfMatchExposure(
+                referenceExposure, exposure, self.warpingKernel, self.psfMatchPolicy)
 
         self.addToClipboard(clipboard, "warpedExposure", psfMatchedExposure)
         self.addToClipboard(clipboard, "psfMatchedExposure", psfMatchedExposure)
-        self.addToClipboard(clipboard, "kernelSum", kernelSum)
+        self.addToClipboard(clipboard, "psfMatchingKernel", psfMatchingKernel)
+        self.addToClipboard(clipboard, "psfMatchingKernelSum", psfMatchingKernelSum)
         
 # this is (unfortunately) required by SimpleStageTester; but not by the regular middleware
 class PsfMatchStage(baseStage.Stage):

@@ -43,18 +43,28 @@ definitions: {
                     default: "warpedExposure"
                 }        
                 psfMatchedExposure: {
-                    description: "Warped and PSF-matched exposure (afwImage.Exposure<x>)."
+                    description: "Warped and PSF-matched exposure (afwImage.Exposure<x>)
+                        normalized to the same intensity as the reference exposure."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
                     default: "psfMatchedExposure"
                 }        
-                kernelSum: {
-                    description: "Sum of PSF-matching kernel at center of exposure (double)."
+                psfMatchingKernel: {
+                    description: "PSF-matching kernel (afwMath.Kernel)."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "kernelSum"
+                    default: "psfMatchingKernel"
+                }        
+                psfMatchingKernelSum: {
+                    description: "Sum of PSF-matching kernel at center of exposure (double).
+                        This is a measure of referenceExposure / exposure image intensity
+                        (but note that warpedExposure is already intensity-matched to referenceExposure)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "psfMatchingKernelSum"
                 }        
             }
         }
@@ -63,7 +73,7 @@ definitions: {
 
    warpingKernelName: {
        type: string
-       description: "Warping kernel for warping exposure to match referenceExposure"
+       description: "Warping kernel for warping exposure to match referenceExposure."
        maxOccurs: 1
        default: "lanczos4"
        allowed: {

@@ -91,17 +91,15 @@ definitions: {
             * The first term has no spatial variation
             * The kernel sum is conserved
             * You may want to turn off 'usePcaForSpatialKernel'
-            * The half-width of the kernel is kernelCols//2, kernelRows//2
-            "
+            * The half-width of the kernel is kernelCols//2, kernelRows//2"
         }
         allowed: {
             value:        "delta-function"
             description:  "delta-function kernel basis set
-            * You may enable the option 'useRegularization'
-            * You should seriously consider 'usePcaForSpatialKernel', which will also
+            * You may enable the option useRegularization
+            * You should seriously consider usePcaForSpatialKernel, which will also
               enable kernel sum conservation for the delta function kernels.
-            * There will be kernelRows x kernelCols basis kernels; one per kernel pixel
-            "
+            * There will be kernelRows x kernelCols basis kernels; one per kernel pixel"
         }
     }
 
@@ -135,7 +133,7 @@ definitions: {
 
     kernelRadiusMax: {
         type: int
-        description: "maximum kernel radius; kernelRows, kernelCols = 2 * kernelRadius + 1""
+        description: "maximum kernel radius; kernelRows, kernelCols = 2 * kernelRadius + 1"
         maxOccurs: 1
         default: 15
     }
@@ -381,8 +379,7 @@ definitions: {
 
             * singleKernelClipping:  true
             * kernelSumClipping:     true
-            * spatialKernelClipping: false
-            "
+            * spatialKernelClipping: false"
         maxOccurs: 1
         default: 1
     }
@@ -430,8 +427,7 @@ definitions: {
             technique as for the non-PCA delta-function and Alard-Lupton kernels.
             
             If this option is used, the first term (mean kernel) will have no
-            spatial variation and the kernel sum will be conserved.
-            "
+            spatial variation and the kernel sum will be conserved."
         maxOccurs: 1
         default: true
     }
@@ -439,8 +435,7 @@ definitions: {
     numPrincipalComponents: {
         type: int
         description: "Number of principal components to use for Pca basis, not counting the mean kernel.
-            Thus you will have numPrincipalComponents + 1 basis functions for the decomposition.
-            "
+            Thus you will have numPrincipalComponents + 1 basis functions for the decomposition."
         maxOccurs: 1
         default: 4
     }
