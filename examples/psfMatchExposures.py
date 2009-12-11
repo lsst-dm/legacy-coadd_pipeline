@@ -109,10 +109,6 @@ where:
         policy = pexPolicy.Policy(policyPath)
     else:
         policy = pexPolicy.Policy()
-
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
-    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath(), True)
-    policy.mergeDefaults(defPolicy.getDictionary())
     
     exposurePathList = []
     ImageSuffix = "_img.fits"

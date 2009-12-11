@@ -55,6 +55,7 @@ definitions: {
                 }
             }
         }
+        minOccurs: 1
         maxOccurs: 1
     }
     

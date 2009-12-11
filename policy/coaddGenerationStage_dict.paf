@@ -19,7 +19,7 @@ definitions: {
                     default: "coaddGenerationEvent"
                 }        
                 psfMatchedExposure: {
-                    description: "Calibrated, background-subtracted, psf-matched exposure
+                    description: "Calibrated, background-subtracted, psf-matched, intensity-matched exposure
                         (afwImage.Exposure<x>)."
                     type: "string"
                     minOccurs: 1

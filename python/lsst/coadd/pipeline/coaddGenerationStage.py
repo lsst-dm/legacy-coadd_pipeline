@@ -1,5 +1,6 @@
 from lsst.pex.logging import Log
 import lsst.coadd.utils as coaddUtils
+import lsst.coadd.psfmatched as coaddPsf
 import baseStage
 
 class CoaddGenerationStageParallel(baseStage.ParallelStage):
@@ -29,11 +30,12 @@ class CoaddGenerationStageParallel(baseStage.ParallelStage):
         if not self.coadd:
             self.log.log(Log.INFO, "First exposure: create coadd")
             allowedMaskPlanes = self.policy.get("allowedMaskPlanes")
-            self.coadd = psfMatchedCoadd.BasicCoadd(psfMatchedExposure, allowedMaskPlanes)
+            self.coadd = coaddPsf.BasicCoadd(psfMatchedExposure, allowedMaskPlanes)
         else:
             weight = self.coadd.addExposure(psfMatchedExposure)
             self.log.log(Log.INFO, "Added exposure to coadd; weight=%0.2f" % (weight,))
 
+        event = self.getFromClipboard(clipboard, "event")
         if event.get("isLastExposure"):
             self.log.log(Log.INFO, "Last exposure: write coadd to clipboard and reset to initial state")
             coaddExposure = self.coadd.getCoadd()

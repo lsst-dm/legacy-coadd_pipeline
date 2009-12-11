@@ -16,6 +16,7 @@ import lsst.afw.math as afwMath
 import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
 
+SaveDebugImages = False
 Verbosity = 5
 
 BackgroundCells = 256
@@ -38,12 +39,12 @@ def subtractBackground(maskedImage):
     image -= bkgObj.getImageF()
     return bkgObj
 
-def makeCoadd(exposurePathList, policy):
-    """Make a coadd using ChiSquareStage
+def makeCoadd(exposurePathList, psfMatchPolicy, coaddGenPolicy):
+    """Make a coadd using psf-matching and coaddGenerationStage
     
     Inputs:
     - exposurePathList: a list of paths to calibrated science exposures
-    - policy: policy to control the coaddition stage
+    - psfMatchPolicy: policy to control psf-matching
     """
     if len(exposurePathList) == 0:
         print "No images specified; nothing to do"
@@ -52,15 +53,19 @@ def makeCoadd(exposurePathList, policy):
     # until PR 1069 is fixed one cannot actually use SimpleStageTester to process multiple files
     # meanwhile just call the process method directly
         
-    # set up pipeline
-    stage = coaddPipe.ChiSquareStage(policy)
+    # set up pipeline stages
+    # note: CoaddGenerationStage cannot be run with SimpleStageTester until PR 1069 is fixed.
+    psfMatchStage = coaddPipe.PsfMatchStage(psfMatchPolicy)
+    psfMatchTester = pexHarness.simpleStageTester.SimpleStageTester(psfMatchStage)
+    psfMatchTester.setDebugVerbosity(Verbosity)
+#     stage = coaddPipe.CoaddGenerationStage(coaddGenPolicy)
 #     tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
 #     tester.setDebugVerbosity(Verbosity)
     tempLog = pexLog.Log()
-    parallelStage = coaddPipe.ChiSquareStageParallel(policy, tempLog)
-
+    coaddGenerationStage = coaddPipe.CoaddGenerationStageParallel(coaddGenPolicy, tempLog)
+    
     # process exposures
-    coadd = None
+    referenceExposure = None
     lastInd = len(exposurePathList) - 1
     for expInd, exposurePath in enumerate(exposurePathList):
         isFirst = (expInd == 0)
@@ -72,32 +77,43 @@ def makeCoadd(exposurePathList, policy):
         print "Subtract background"
         subtractBackground(exposure.getMaskedImage())
 
-        # set up the clipboard
         clipboard = pexHarness.Clipboard.Clipboard()
-        inPolicy = policy.get("inputKeys")
-        clipboard.put(inPolicy.get("exposure"), exposure)
         event = dafBase.PropertySet()
         event.add("isLastExposure", isLast)
-        clipboard.put(inPolicy.get("event"), event)
+        clipboard.put(coaddGenPolicy.get("inputKeys.event"), event)
 
-        # run the stage
-#        outClipboard = tester.runWorker(clipboard)
-        parallelStage.process(clipboard)
-        outClipboard = clipboard
+        # psf-match, if necessary
+        if not referenceExposure:
+            print "First exposure; simply add to coadd"
+            referenceExposure = exposure
+            clipboard.put(coaddGenPolicy.get("inputKeys.psfMatchedExposure"), exposure)
+        else:
+            clipboard.put(psfMatchPolicy.get("inputKeys.exposure"), exposure)
+            clipboard.put(psfMatchPolicy.get("inputKeys.referenceExposure"), referenceExposure)
+            psfMatchTester.runWorker(clipboard)
+            
+            if SaveDebugImages:
+                exposureName = os.path.basename(exposurePath)
+                warpedExposure = clipboard.get(psfMatchPolicy.get("outputKeys.warpedExposure"))
+                warpedExposure.writeFits("warped_%s" % (exposureName,))
+                psfMatchedExposure = clipboard.get(psfMatchPolicy.get("outputKeys.psfMatchedExposure"))
+                psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
+
+#        tester.runWorker(clipboard)
+        coaddGenerationStage.process(clipboard)
     
         if isLast:
             # one could put this code after the loop, but then it is less robust against
             # code changes (e.g. making multiple coadds), early exit, etc.
-            outPolicy = policy.get("outputKeys")
-            coadd = outClipboard.get(outPolicy.get("coadd"))
-            weightMap = outClipboard.get(outPolicy.get("weightMap"))
+            coadd = clipboard.get(coaddGenPolicy.get("outputKeys.coadd"))
+            weightMap = clipboard.get(coaddGenPolicy.get("outputKeys.weightMap"))
             return (coadd, weightMap)
 
     raise RuntimeError("Unexpected error; last exposure never run")
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', Verbosity)
-    helpStr = """Usage: makeCoadd.py coaddPath exposureList [policyPath]
+    helpStr = """Usage: makeCoadd.py coaddPath exposureList  [psfMatchPolicyPath [coaddGenerationPolicyPath]]
 
 where:
 - coaddPath is the desired name or path of the output coadd
@@ -108,7 +124,8 @@ where:
   - the first exposure listed is the reference exposure:
         its size and WCS are used for the coadd exposure
   - empty lines and lines that start with # are ignored.
-- policyPath is the path to a policy file
+- psfMatchPolicyPath is the path to a policy file; overrides to policy/psfMatchStage_dict.paf
+- coaddGenerationPolicyPath is the path to a policy file; overrides to policy/coaddGenerationStage.paf
 """
     if len(sys.argv) not in (3, 4):
         print helpStr
@@ -124,13 +141,22 @@ where:
 
     if len(sys.argv) > 3:
         policyPath = sys.argv[3]
-        policy = pexPolicy.Policy(policyPath)
+        psfMatchPolicy = pexPolicy.Policy(policyPath)
     else:
-        policy = pexPolicy.Policy()
-    # remove the following bit once the code uses simpleStageTester
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquareStage_dict.paf", "policy")
-    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
-    policy.mergeDefaults(defPolicy)
+        psfMatchPolicy = pexPolicy.Policy()
+    # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
+    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
+    defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
+    psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
+
+    if len(sys.argv) > 4:
+        policyPath = sys.argv[4]
+        coaddGenPolicy = pexPolicy.Policy(coaddGenerationPolicyPath)
+    else:
+        coaddGenPolicy = pexPolicy.Policy()
+    coaddGenPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "coaddGenerationStage_dict.paf", "policy")
+    defCoaddGenPolicy = pexPolicy.Policy.createPolicy(coaddGenPolFile, coaddGenPolFile.getRepositoryPath())
+    coaddGenPolicy.mergeDefaults(defCoaddGenPolicy)
     
     exposurePathList = []
     ImageSuffix = "_img.fits"
@@ -146,6 +172,6 @@ where:
                 continue
             exposurePathList.append(filePath)
 
-    coadd, weightMap = makeCoadd(exposurePathList, policy)
+    coadd, weightMap = makeCoadd(exposurePathList, psfMatchPolicy, coaddGenPolicy)
     coadd.writeFits(outName)
     weightMap.writeFits(weightOutName)
