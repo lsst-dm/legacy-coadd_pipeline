@@ -1,6 +1,6 @@
 #<?cfg paf dictionary ?>
 
-target: lsst.coadd.pipeline.ChiSquareStage
+target: lsst.coadd.pipeline.CoaddGenerationStage
 
 definitions: {
     inputKeys: {
@@ -11,19 +11,20 @@ definitions: {
                 event: {
                     type: "string"
                     description: "An event (dafBase.PropertySet). Required fields:
-                        * isLastExposure a boolean. If True then the stage will add the exposure
-                            to the coadd, output the coadd and reset itself.
+                        * isLastExposure a boolean. If True then the stage will add the exposure to the coadd,
+                            output the coadd and reset itself.
                             The next exposure, if any, will start a new coadd."
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "coaddChiSquaredEvent"
+                    default: "coaddGenerationEvent"
                 }        
-                exposure: {
-                    description: "Calibrated, background-subtracted exposure to add to the coadd (afwImage.Exposure<x>)."
+                psfMatchedExposure: {
+                    description: "Calibrated, background-subtracted, psf-matched exposure
+                        (afwImage.Exposure<x>)."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "backgroundSubtractedExposure"
+                    default: "psfMatchedExposure"
                 }        
             }
         }
@@ -43,7 +44,7 @@ definitions: {
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "chiSquaredCoadd"
+                    default: "coadd"
                 }        
                 weightMap: {
                     description: "Coadd weight map (afwImage.ImageF).
@@ -51,18 +52,27 @@ definitions: {
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "chiSquaredWeightMap"
+                    default: "weightMap"
+                }
+                weight: {
+                    description: "Weight of exposure (1/mean variance) (double)."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "weight"
                 }
             }
         }
         maxOccurs: 1
     }
     
-    coaddPolicy: {
-        description: "Policy to control chi-squared coadd generation."
-        type: "policy"
-        dictionary: @ChiSquaredCoadd_dict.paf
+    allowedMaskPlanes: {
+        description: "Mask planes to allow (ignore) when rejecting masked pixels.
+            Specify as a space-separated list of mask plane names.
+            See Mask.cc in afwImage for a list of default names."
+        type: "string"
         minOccurs: 1
         maxOccurs: 1
-    }
+        default: "BAD SAT INTRP"
+    }        
 }
