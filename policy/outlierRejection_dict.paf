@@ -1,0 +1,29 @@
+#<?cfg paf dictionary ?>
+#
+# Dictionary for outlier rejection.
+# Eventually this be a copy of the authoritative version in coadd_utils;
+# remove it as soon as the middleware supports accessing the correct version from a stage dictionary.
+#
+definitions: {
+    numSigma: {
+        description: "Number of sigma beyond the mean outside of which to clip outliers."
+        type: "double"
+        minOccurs: 1
+        maxOccurs: 1
+        default: 3.0
+    }        
+    numIterations: {
+        description: "Number of iterations for outlier rejection."
+        type: "int"
+        minOccurs: 1
+        maxOccurs: 1
+        default: 2
+    }        
+    useInterQuartileRange: {
+        description: "Use the inter-quartile range to compute sigma? If False use standard deviation."
+        type: "bool"
+        minOccurs: 1
+        maxOccurs: 1
+        default: true
+    }
+}

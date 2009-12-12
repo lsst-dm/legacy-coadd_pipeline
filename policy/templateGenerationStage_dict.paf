@@ -35,6 +35,14 @@ definitions: {
                     maxOccurs: 1
                     default: "coadd"
                 }        
+                weightMap: {
+                    description: "Coadd weight map (afwImage.ImageF).
+                        Only output if the event's isLastExposure is True."
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "weightMap"
+                }
             }
         }
         minOccurs: 1
