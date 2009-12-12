@@ -8,6 +8,8 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
     
     The input exposures must have the same WCS to get reasonable results. This is NOT checked.
     
+    @todo: modify to NOT warp (call WarpExposureStageParallel first!).
+    
     @todo: modify to psf-match one exposure to a psf model instead of another exposure.
     """
     packageName = "coadd_pipeline"

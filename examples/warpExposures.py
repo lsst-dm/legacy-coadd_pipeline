@@ -7,39 +7,16 @@ import pdb
 import unittest
 
 import eups
-import lsst.daf.base as dafBase
 import lsst.pex.harness as pexHarness
-import lsst.pex.logging as pexLog
 import lsst.pex.policy as pexPolicy
 import lsst.afw.image as afwImage
-import lsst.afw.math as afwMath
 import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
 
 Verbosity = 5
 
-BackgroundCells = 256
-
-def subtractBackground(maskedImage):
-    """Subtract the background from a MaskedImage
-    
-    Note: at present the mask and variance are ignored, but they might used be someday.
-    
-    Returns the background object returned by afwMath.makeBackground.
-    """
-    bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
-    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCells) + 1)
-    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCells) + 1)
-    bkgControl.sctrl.setNumSigmaClip(3)
-    bkgControl.sctrl.setNumIter(3)
-
-    image = maskedImage.getImage()
-    bkgObj = afwMath.makeBackground(image, bkgControl)
-    image -= bkgObj.getImageF()
-    return bkgObj
-
-def psfMatchExposures(exposurePathList, policy):
-    """Warp and psf-match a set of exposures to match a reference exposure
+def warpExposures(exposurePathList, policy):
+    """Warp a set of exposures to match a reference exposure
     
     Inputs:
     - exposurePathList: a list of paths to calibrated science exposures;
@@ -51,7 +28,7 @@ def psfMatchExposures(exposurePathList, policy):
         return
 
     # set up pipeline
-    stage = coaddPipe.PsfMatchStage(policy)
+    stage = coaddPipe.WarpExposureStage(policy)
     tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
     tester.setDebugVerbosity(Verbosity)
 
@@ -64,39 +41,28 @@ def psfMatchExposures(exposurePathList, policy):
         exposure = afwImage.ExposureF(exposurePath)
         exposureName = os.path.basename(exposurePath)
 
-        print "Subtract background"
-        subtractBackground(exposure.getMaskedImage())
-
         # set up the clipboard
         clipboard = pexHarness.Clipboard.Clipboard()
-        inPolicy = policy.get("inputKeys")
-        clipboard.put(inPolicy.get("exposure"), exposure)
-        clipboard.put(inPolicy.get("referenceExposure"), referenceExposure)
+        clipboard.put(policy.get("inputKeys.exposure"), exposure)
+        clipboard.put(policy.get("inputKeys.referenceExposure"), referenceExposure)
 
         # run the stage
-        outClipboard = tester.runWorker(clipboard)
+        tester.runWorker(clipboard)
         
-        outPolicy = policy.get("outputKeys")
-        warpedExposure = outClipboard.get(outPolicy.get("warpedExposure"))
-        psfMatchedExposure = outClipboard.get(outPolicy.get("psfMatchedExposure"))
-        
+        warpedExposure = clipboard.get(policy.get("outputKeys.warpedExposure"))
         warpedExposure.writeFits("warped_%s" % (exposureName,))
-        psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
 
 if __name__ == "__main__":
-    pexLog.Trace.setVerbosity('lsst.coadd', Verbosity)
-    helpStr = """Usage: psfMatchExposures.py exposureList [policyPath]
+    helpStr = """Usage: warpExposures.py exposureList [policyPath]
 
 where:
 - exposureList is a file containing a list of:
     pathToExposure
   where:
   - pathToExposure is the path to an Exposure (without the final _img.fits)
-  - the first exposure listed is the reference exposure:
-        all other exposures are warped and PSF-matched to it.
-        Thus the reference exposure should have the worst PSF of the set.
+  - the first exposure listed is the reference exposure: all other exposures are warped to match it.
   - empty lines and lines that start with # are ignored.
-- policyPath is the path to a policy file; overrides for policy/psfMatchStage_dict.paf
+- policyPath is the path to a policy file; overrides for policy/warpExposureStage_dict.py
 """
     if len(sys.argv) not in (2, 3):
         print helpStr
@@ -109,6 +75,10 @@ where:
         policy = pexPolicy.Policy(policyPath)
     else:
         policy = pexPolicy.Policy()
+    # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf", "policy")
+    defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
+    policy.mergeDefaults(defPolicy)
     
     exposurePathList = []
     ImageSuffix = "_img.fits"
@@ -124,4 +94,4 @@ where:
                 continue
             exposurePathList.append(filePath)
 
-    psfMatchExposures(exposurePathList, policy)
+    warpExposures(exposurePathList, policy)
