@@ -2,7 +2,7 @@ from lsst.pex.logging import Log
 import lsst.coadd.chisquared as coaddChiSq
 import baseStage
 
-class ChiSquareStageParallel(baseStage.ParallelStage):
+class ChiSquaredStageParallel(baseStage.ParallelStage):
     """
     Pipeline stage to create a chi-squared coadd
 
@@ -12,7 +12,7 @@ class ChiSquareStageParallel(baseStage.ParallelStage):
     The coadd is written to the clipboard when an event is processed with isLastExposure = True.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "chiSquareStage_dict.paf"
+    policyDictionaryName = "chiSquaredStage_dict.paf"
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
@@ -52,6 +52,6 @@ class ChiSquareStageParallel(baseStage.ParallelStage):
             self.coadd = None
         
 # this is (unfortunately) required by SimpleStageTester; but not by the regular middleware
-class ChiSquareStage(baseStage.Stage):
-    parallelClass = ChiSquareStageParallel
+class ChiSquaredStage(baseStage.Stage):
+    parallelClass = ChiSquaredStageParallel
 

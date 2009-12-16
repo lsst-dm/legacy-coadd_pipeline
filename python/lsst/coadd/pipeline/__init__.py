@@ -1,4 +1,4 @@
-from chiSquareStage import *
+from chiSquaredStage import *
 from psfMatchStage import *
 from coaddGenerationStage import *
 from templateGenerationStage import *

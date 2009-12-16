@@ -38,22 +38,26 @@ def subtractBackground(maskedImage):
     image -= bkgObj.getImageF()
     return bkgObj
 
-def psfMatchExposures(exposurePathList, policy):
+def psfMatchExposures(exposurePathList, warpExposurePolicy, psfMatchPolicy):
     """Warp and psf-match a set of exposures to match a reference exposure
     
     Inputs:
     - exposurePathList: a list of paths to calibrated science exposures;
         the first one is taken to be the reference (and so is not processed).
-    - policy: policy to control the coaddition stage
+    - warpExposurePolicy: policy to control the warpExposure stage
+    - psfMatchPolicy: policy to control the psfMatch stage
     """
     if len(exposurePathList) == 0:
         print "No images specified; nothing to do"
         return
 
     # set up pipeline
-    stage = coaddPipe.PsfMatchStage(policy)
-    tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
-    tester.setDebugVerbosity(Verbosity)
+    warpExposureStage = coaddPipe.WarpExposureStage(warpExposurePolicy)
+    warpExposureTester = pexHarness.simpleStageTester.SimpleStageTester(warpExposureStage)
+    warpExposureTester.setDebugVerbosity(Verbosity)
+    psfMatchStage = coaddPipe.PsfMatchStage(psfMatchPolicy)
+    psfMatchTester = pexHarness.simpleStageTester.SimpleStageTester(psfMatchStage)
+    psfMatchTester.setDebugVerbosity(Verbosity)
 
     # process exposures
     referenceExposurePath = exposurePathList[0]
@@ -69,16 +73,15 @@ def psfMatchExposures(exposurePathList, policy):
 
         # set up the clipboard
         clipboard = pexHarness.Clipboard.Clipboard()
-        inPolicy = policy.get("inputKeys")
-        clipboard.put(inPolicy.get("exposure"), exposure)
-        clipboard.put(inPolicy.get("referenceExposure"), referenceExposure)
+        clipboard.put(warpExposurePolicy.get("inputKeys.exposure"), exposure)
+        clipboard.put(warpExposurePolicy.get("inputKeys.referenceExposure"), referenceExposure)
 
-        # run the stage
-        outClipboard = tester.runWorker(clipboard)
+        # run the stages
+        warpExposureTester.runWorker(clipboard)
+        psfMatchTester.runWorker(clipboard)
         
-        outPolicy = policy.get("outputKeys")
-        warpedExposure = outClipboard.get(outPolicy.get("warpedExposure"))
-        psfMatchedExposure = outClipboard.get(outPolicy.get("psfMatchedExposure"))
+        warpedExposure = clipboard.get(warpExposurePolicy.get("outputKeys.warpedExposure"))
+        psfMatchedExposure = clipboard.get(psfMatchPolicy.get("outputKeys.psfMatchedExposure"))
         
         warpedExposure.writeFits("warped_%s" % (exposureName,))
         psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
@@ -106,9 +109,9 @@ where:
 
     if len(sys.argv) > 2:
         policyPath = sys.argv[2]
-        policy = pexPolicy.Policy(policyPath)
+        psfMatchPolicy = pexPolicy.Policy(policyPath)
     else:
-        policy = pexPolicy.Policy()
+        psfMatchPolicy = pexPolicy.Policy()
     
     exposurePathList = []
     ImageSuffix = "_img.fits"
@@ -123,5 +126,14 @@ where:
                 print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
                 continue
             exposurePathList.append(filePath)
+    # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
+    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf",
+        "policy")
+    warpExposurePolicy = pexPolicy.Policy.createPolicy(warpExposurePolFile,
+        warpExposurePolFile.getRepositoryPath())
 
-    psfMatchExposures(exposurePathList, policy)
+    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
+    defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
+    psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
+
+    psfMatchExposures(exposurePathList, warpExposurePolicy, psfMatchPolicy)

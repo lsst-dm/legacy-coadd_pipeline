@@ -45,7 +45,7 @@ def subtractBackground(maskedImage):
     image -= bkgObj.getImageF()
     return bkgObj
 
-def makeCoadd(exposurePathList, psfMatchPolicy, templateGenPolicy):
+def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenPolicy):
     """Make a coadd using psf-matching and templateGenerationStage
     
     Inputs:
@@ -61,6 +61,9 @@ def makeCoadd(exposurePathList, psfMatchPolicy, templateGenPolicy):
         
     # set up pipeline stages
     # note: TemplateGenerationStage cannot be run with SimpleStageTester until PR 1069 is fixed.
+    warpExposureStage = coaddPipe.WarpExposureStage(warpExposurePolicy)
+    warpExposureTester = pexHarness.simpleStageTester.SimpleStageTester(warpExposureStage)
+    warpExposureTester.setDebugVerbosity(Verbosity)
     psfMatchStage = coaddPipe.PsfMatchStage(psfMatchPolicy)
     psfMatchTester = pexHarness.simpleStageTester.SimpleStageTester(psfMatchStage)
     psfMatchTester.setDebugVerbosity(Verbosity)
@@ -89,17 +92,18 @@ def makeCoadd(exposurePathList, psfMatchPolicy, templateGenPolicy):
             referenceExposure = exposure
             psfMatchedExposureList.append(afwImage.ExposureF(exposure, BBox))
         else:
-            clipboard.put(psfMatchPolicy.get("inputKeys.exposure"), exposure)
-            clipboard.put(psfMatchPolicy.get("inputKeys.referenceExposure"), referenceExposure)
+            clipboard.put(warpExposurePolicy.get("inputKeys.exposure"), exposure)
+            clipboard.put(warpExposurePolicy.get("inputKeys.referenceExposure"), referenceExposure)
+            warpExposureTester.runWorker(clipboard)
             psfMatchTester.runWorker(clipboard)
             
             psfMatchedExposure = clipboard.get(psfMatchPolicy.get("outputKeys.psfMatchedExposure"))
             psfMatchedExposureList.append(afwImage.ExposureF(psfMatchedExposure, BBox))
             if SaveDebugImages:
                 exposureName = os.path.basename(exposurePath)
-                psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
-                warpedExposure = clipboard.get(psfMatchPolicy.get("outputKeys.warpedExposure"))
+                warpedExposure = clipboard.get(warpExposurePolicy.get("outputKeys.warpedExposure"))
                 warpedExposure.writeFits("warped_%s" % (exposureName,))
+                psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
 
     clipboard = pexHarness.Clipboard.Clipboard()
     coadd = clipboard.put(templateGenPolicy.get("inputKeys.exposureList"), psfMatchedExposureList)
@@ -142,6 +146,10 @@ where:
     else:
         psfMatchPolicy = pexPolicy.Policy()
     # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
+    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf",
+        "policy")
+    warpExposurePolicy = pexPolicy.Policy.createPolicy(warpExposurePolFile,
+        warpExposurePolFile.getRepositoryPath())
     psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
     defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
     psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
@@ -171,6 +179,6 @@ where:
                 continue
             exposurePathList.append(filePath)
 
-    coadd, weightMap = makeCoadd(exposurePathList, psfMatchPolicy, templateGenPolicy)
+    coadd, weightMap = makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenPolicy)
     coadd.writeFits(outName)
     weightMap.writeFits(weightOutName)

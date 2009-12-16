@@ -39,7 +39,7 @@ def subtractBackground(maskedImage):
     return bkgObj
 
 def makeCoadd(exposurePathList, policy):
-    """Make a coadd using ChiSquareStage
+    """Make a coadd using ChiSquaredStage
     
     Inputs:
     - exposurePathList: a list of paths to calibrated science exposures
@@ -53,11 +53,11 @@ def makeCoadd(exposurePathList, policy):
     # meanwhile just call the process method directly
         
     # set up pipeline
-    stage = coaddPipe.ChiSquareStage(policy)
+    stage = coaddPipe.ChiSquaredStage(policy)
 #     tester = pexHarness.simpleStageTester.SimpleStageTester(stage)
 #     tester.setDebugVerbosity(Verbosity)
     tempLog = pexLog.Log()
-    parallelStage = coaddPipe.ChiSquareStageParallel(policy, tempLog)
+    parallelStage = coaddPipe.ChiSquaredStageParallel(policy, tempLog)
 
     # process exposures
     coadd = None
@@ -128,7 +128,7 @@ where:
     else:
         policy = pexPolicy.Policy()
     # remove the following bit once the code uses simpleStageTester
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquareStage_dict.paf", "policy")
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquaredStage_dict.paf", "policy")
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
     policy.mergeDefaults(defPolicy)
     

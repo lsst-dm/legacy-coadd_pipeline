@@ -1,4 +1,5 @@
 import lsst.coadd.psfmatched as psfMatched
+import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import baseStage
 
@@ -8,8 +9,6 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
     
     The input exposures must have the same WCS to get reasonable results. This is NOT checked.
     
-    @todo: modify to NOT warp (call WarpExposureStageParallel first!).
-    
     @todo: modify to psf-match one exposure to a psf model instead of another exposure.
     """
     packageName = "coadd_pipeline"
@@ -18,7 +17,6 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
-        self.warpingKernel = afwMath.makeWarpingKernel(self.policy.get("warpingKernelName"))
         self.psfMatchPolicy = self.policy.get("psfMatchPolicy")
 
     def process(self, clipboard):
@@ -28,14 +26,14 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
 #         for key in clipboard.getKeys():
 #             print "*", key
 
-        exposure = self.getFromClipboard(clipboard, "exposure")
+        warpedExposure = self.getFromClipboard(clipboard, "warpedExposure")
         referenceExposure = self.getFromClipboard(clipboard, "referenceExposure")
-        
-        warpedExposure, psfMatchedExposure, psfMatchingKernel, psfMatchingKernelSum, backgroundModel = \
-            psfMatched.warpAndPsfMatchExposure(
-                referenceExposure, exposure, self.warpingKernel, self.psfMatchPolicy)
 
-        self.addToClipboard(clipboard, "warpedExposure", psfMatchedExposure)
+        psfMatchedMaskedImage, psfMatchingKernel, psfMatchingKernelSum, backgroundModel = \
+            psfMatched.psfMatchMaskedImage(referenceExposure.getMaskedImage(),
+                warpedExposure.getMaskedImage(), self.psfMatchPolicy)
+        psfMatchedExposure = afwImage.makeExposure(psfMatchedMaskedImage, referenceExposure.getWcs())
+
         self.addToClipboard(clipboard, "psfMatchedExposure", psfMatchedExposure)
         self.addToClipboard(clipboard, "psfMatchingKernel", psfMatchingKernel)
         self.addToClipboard(clipboard, "psfMatchingKernelSum", psfMatchingKernelSum)

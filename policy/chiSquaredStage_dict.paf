@@ -1,6 +1,6 @@
 #<?cfg paf dictionary ?>
 
-target: lsst.coadd.pipeline.ChiSquareStage
+target: lsst.coadd.pipeline.ChiSquaredStage
 
 definitions: {
     inputKeys: {
