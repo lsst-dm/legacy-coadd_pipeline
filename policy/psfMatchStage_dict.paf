@@ -53,8 +53,8 @@ definitions: {
                 psfMatchingKernelSum: {
                     description: "Sum of PSF-matching kernel at center of exposure (double).
                         This is a measure of referenceExposure / warpedExposure image intensity
-                        (but is not the exact scaling used to normalize the PSF-matched exposure
-                        if psfMatchingKernel has a spatially varying sum)."
+                        (note: if psfMatchingKernel has a spatially varying sum--which it normally should not
+                        --then this sum is not the exact scaling used to normalize psfMatchedExposure)."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
