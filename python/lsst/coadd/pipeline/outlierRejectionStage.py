@@ -2,14 +2,14 @@ from lsst.pex.logging import Log
 import lsst.afw.image as afwImage
 import baseStage
 
-class TemplateGenerationStageParallel(baseStage.ParallelStage):
+class OutlierRejectionStageParallel(baseStage.ParallelStage):
     """
     Pipeline stage to combine a list of exposures computing an outlier-rejected mean.
     
     @todo: skeleton only!
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "templateGenerationStage_dict.paf"
+    policyDictionaryName = "outlierRejectionStage_dict.paf"
     def process(self, clipboard):
         """Reject outliers"""
 #         print "***** process ******"
@@ -28,5 +28,5 @@ class TemplateGenerationStageParallel(baseStage.ParallelStage):
         self.addToClipboard(clipboard, "weightMap", weightMap)
 
 # this is (unfortunately) required by SimpleStageTester; but not by the regular middleware
-class TemplateGenerationStage(baseStage.Stage):
-    parallelClass = TemplateGenerationStageParallel
+class OutlierRejectionStage(baseStage.Stage):
+    parallelClass = OutlierRejectionStageParallel

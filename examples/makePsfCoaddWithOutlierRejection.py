@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Exercise templateGenerationStage
+"""Exercise outlierRejectionStage
 
 To avoid filling up the disk or memory, it simply runs over small bit of a set of exposures
 """
@@ -45,8 +45,8 @@ def subtractBackground(maskedImage):
     image -= bkgObj.getImageF()
     return bkgObj
 
-def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenPolicy):
-    """Make a coadd using psf-matching and templateGenerationStage
+def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, outlierRejectionPolicy):
+    """Make a coadd using psf-matching and outlierRejectionStage
     
     Inputs:
     - exposurePathList: a list of paths to calibrated science exposures
@@ -60,16 +60,16 @@ def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenP
     # meanwhile just call the process method directly
         
     # set up pipeline stages
-    # note: TemplateGenerationStage cannot be run with SimpleStageTester until PR 1069 is fixed.
+    # note: OutlierRejectionStage cannot be run with SimpleStageTester until PR 1069 is fixed.
     warpExposureStage = coaddPipe.WarpExposureStage(warpExposurePolicy)
     warpExposureTester = pexHarness.simpleStageTester.SimpleStageTester(warpExposureStage)
     warpExposureTester.setDebugVerbosity(Verbosity)
     psfMatchStage = coaddPipe.PsfMatchStage(psfMatchPolicy)
     psfMatchTester = pexHarness.simpleStageTester.SimpleStageTester(psfMatchStage)
     psfMatchTester.setDebugVerbosity(Verbosity)
-    templateGenStage = coaddPipe.TemplateGenerationStage(templateGenPolicy)
-    templateGenTester = pexHarness.simpleStageTester.SimpleStageTester(templateGenStage)
-    templateGenTester.setDebugVerbosity(Verbosity)
+    outlierRejectionStage = coaddPipe.OutlierRejectionStage(outlierRejectionPolicy)
+    outlierRejectionTester = pexHarness.simpleStageTester.SimpleStageTester(outlierRejectionStage)
+    outlierRejectionTester.setDebugVerbosity(Verbosity)
     
     # process exposures
     referenceExposure = None
@@ -106,15 +106,15 @@ def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenP
                 psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
 
     clipboard = pexHarness.Clipboard.Clipboard()
-    coadd = clipboard.put(templateGenPolicy.get("inputKeys.exposureList"), psfMatchedExposureList)
-    templateGenTester.runWorker(clipboard)
-    coadd = clipboard.get(templateGenPolicy.get("outputKeys.coadd"))
-    weightMap = clipboard.get(templateGenPolicy.get("outputKeys.weightMap"))
+    coadd = clipboard.put(outlierRejectionPolicy.get("inputKeys.exposureList"), psfMatchedExposureList)
+    outlierRejectionTester.runWorker(clipboard)
+    coadd = clipboard.get(outlierRejectionPolicy.get("outputKeys.coadd"))
+    weightMap = clipboard.get(outlierRejectionPolicy.get("outputKeys.weightMap"))
     return (coadd, weightMap)
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', Verbosity)
-    helpStr = """Usage: makePsfCoaddWithOutlierRejection.py coaddPath psfMatchedExposureList  [psfMatchPolicyPath [templateGenerationPolicyPath]]
+    helpStr = """Usage: makePsfCoaddWithOutlierRejection.py coaddPath psfMatchedExposureList  [psfMatchPolicyPath [outlierRejectionPolicyPath]]
 
 where:
 - coaddPath is the desired name or path of the output coadd
@@ -126,7 +126,7 @@ where:
         its size and WCS are used for the coadd exposure
   - empty lines and lines that start with # are ignored.
 - psfMatchPolicyPath is the path to a policy file; overrides for policy/psfMatchStage_dict.paf
-- templateGenerationPolicyPath is the path to a policy file; overrides for policy/templateGenerationStage.paf
+- outlierRejectionPolicyPath is the path to a policy file; overrides for policy/outlierRejectionStage.paf
 """
     if len(sys.argv) not in (3, 4):
         print helpStr
@@ -156,14 +156,14 @@ where:
 
     if len(sys.argv) > 4:
         policyPath = sys.argv[4]
-        templateGenPolicy = pexPolicy.Policy(templateGenerationPolicyPath)
+        outlierRejectionPolicy = pexPolicy.Policy(outlierRejectionPolicyPath)
     else:
-        templateGenPolicy = pexPolicy.Policy()
-    templateGenPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "templateGenerationStage_dict.paf",
+        outlierRejectionPolicy = pexPolicy.Policy()
+    outlierRejectionPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "outlierRejectionStage_dict.paf",
         "policy")
-    defTemplateGenPolicy = pexPolicy.Policy.createPolicy(templateGenPolFile,
-        templateGenPolFile.getRepositoryPath())
-    templateGenPolicy.mergeDefaults(defTemplateGenPolicy)
+    defOutlierRejectionPolicy = pexPolicy.Policy.createPolicy(outlierRejectionPolFile,
+        outlierRejectionPolFile.getRepositoryPath())
+    outlierRejectionPolicy.mergeDefaults(defOutlierRejectionPolicy)
     
     exposurePathList = []
     ImageSuffix = "_img.fits"
@@ -179,6 +179,6 @@ where:
                 continue
             exposurePathList.append(filePath)
 
-    coadd, weightMap = makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, templateGenPolicy)
+    coadd, weightMap = makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, outlierRejectionPolicy)
     coadd.writeFits(outName)
     weightMap.writeFits(weightOutName)

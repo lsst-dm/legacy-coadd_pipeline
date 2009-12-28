@@ -1,6 +1,6 @@
 #<?cfg paf dictionary ?>
 
-target: lsst.coadd.pipeline.CoaddGenerationStage
+target: lsst.coadd.pipeline.OutlierRejectionStage
 
 definitions: {
     inputKeys: {

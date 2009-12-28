@@ -5,7 +5,7 @@ import baseStage
 
 class CoaddGenerationStageParallel(baseStage.ParallelStage):
     """
-    Pipeline stage add warped and psf-matched exposures to a coadd.
+    Pipeline stage to add warped and psf-matched exposures to a coadd.
     
     @todo: modify to use HEALPix.
     """
