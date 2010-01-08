@@ -31,7 +31,7 @@ definitions: {
     
     #output clipboard keys:
     outputKeys: {
-        description: "Names if output items on the clipboard."
+        description: "Names of output items on the clipboard."
         type: "policy"
         dictionary: {
             definitions: {

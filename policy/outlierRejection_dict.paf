@@ -1,8 +1,6 @@
 #<?cfg paf dictionary ?>
 #
 # Dictionary for outlier rejection.
-# Eventually this be a copy of the authoritative version in coadd_utils;
-# remove it as soon as the middleware supports accessing the correct version from a stage dictionary.
 #
 definitions: {
     numSigma: {
@@ -19,11 +17,13 @@ definitions: {
         maxOccurs: 1
         default: 2
     }        
-    useInterQuartileRange: {
-        description: "Use the inter-quartile range to compute sigma? If False use standard deviation."
-        type: "bool"
+    allowedMaskPlanes: {
+        description: "Mask planes to allow (ignore) when rejecting masked pixels.
+            Specify as a space-separated list of mask plane names.
+            See Mask.cc in afwImage for a list of default names."
+        type: "string"
         minOccurs: 1
         maxOccurs: 1
-        default: true
-    }
+        default: "BAD SAT INTRP"
+    }        
 }

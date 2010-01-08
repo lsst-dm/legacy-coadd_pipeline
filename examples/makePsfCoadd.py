@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import with_statement
 
-import sys, os, math
-
-import pdb
-import unittest
+import os
+import sys
+import time
 
 import eups
 import lsst.daf.base as dafBase
@@ -17,7 +16,7 @@ import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
 
 SaveDebugImages = False
-Verbosity = 5
+Verbosity = 1
 
 BackgroundCells = 256
 
@@ -182,6 +181,16 @@ where:
                 continue
             exposurePathList.append(filePath)
 
+    if len(exposurePathList) == 0:
+        print "No exposures; nothing to do"
+        sys.exit(0)
+
+    startTime = time.time()
+
     coadd, weightMap = makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, coaddGenPolicy)
     coadd.writeFits(outName)
     weightMap.writeFits(weightOutName)
+
+    deltaTime = time.time() - startTime
+    print "Processed %d exposures in %0.1f seconds; %0.1f seconds/exposure" % \
+        (len(exposurePathList), deltaTime, deltaTime/float(len(exposurePathList)))

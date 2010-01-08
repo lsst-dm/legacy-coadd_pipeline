@@ -8,13 +8,23 @@ definitions: {
         type: "policy"
         dictionary: {
             definitions: {
-                exposureList: {
-                    description: "List of psf-matched intensity-matched exposures
-                        (std::vector<afwImage.Exposure<x>::Ptr>)."
+                maskedImageList: {
+                    description: "List of psf-matched intensity-matched masked images
+                        (std::vector<afwImage.MaskedImage<x>::Ptr>)."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
-                    default: "exposureList"
+                    default: "maskedImageList"
+                }        
+                weightList: {
+                    description: "List of weights for masked images (std::vector<double>);
+                        this is an optional factor that is applied in addition to the variance:
+                        the weight of image i = weightList[i] / mean variance[i].
+                        If omitted then weight of image i = 1 / mean variance[i]"
+                    type: "string"
+                    minOccurs: 1
+                    maxOccurs: 1
+                    default: "weightList"
                 }        
             }
         }
@@ -24,25 +34,18 @@ definitions: {
     
     #output clipboard keys:
     outputKeys: {
-        description: "Names if output items on the clipboard."
+        description: "Names of output items on the clipboard."
         type: "policy"
         dictionary: {
             definitions: {
                 coadd: {
-                    description: "Coadd: mean of input images with outlier rejection (afwImage.Exposure<x>)."
+                    description: "Coadd: mean of input masked images with outlier rejection
+                        (afwImage.MaskedImage<x>)."
                     type: "string"
                     minOccurs: 1
                     maxOccurs: 1
                     default: "coadd"
                 }        
-                weightMap: {
-                    description: "Coadd weight map (afwImage.ImageF).
-                        Only output if the event's isLastExposure is True."
-                    type: "string"
-                    minOccurs: 1
-                    maxOccurs: 1
-                    default: "weightMap"
-                }
             }
         }
         minOccurs: 1

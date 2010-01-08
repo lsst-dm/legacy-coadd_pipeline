@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 from __future__ import with_statement
 
-import sys, os, math
-
-import pdb
-import unittest
+import os
+import sys
+import time
 
 import eups
 import lsst.daf.base as dafBase
@@ -16,7 +15,7 @@ import lsst.afw.math as afwMath
 import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
 
-Verbosity = 5
+Verbosity = 1
 
 BackgroundCells = 256
 
@@ -126,6 +125,11 @@ where:
                 print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
                 continue
             exposurePathList.append(filePath)
+
+    if len(exposurePathList) == 0:
+        print "No exposures; nothing to do"
+        sys.exit(0)
+
     # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
     warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf",
         "policy")
@@ -135,5 +139,11 @@ where:
     psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
     defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
     psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
+    
+    startTime = time.time()
 
     psfMatchExposures(exposurePathList, warpExposurePolicy, psfMatchPolicy)
+
+    deltaTime = time.time() - startTime
+    print "Processed %d exposures in %0.1f seconds; %0.1f seconds/exposure" % \
+        (len(exposurePathList), deltaTime, deltaTime/float(len(exposurePathList)))

@@ -21,7 +21,7 @@ import lsst.coadd.pipeline as coaddPipe
 from lsst.pex.harness import Clipboard, simpleStageTester
 
 SaveDebugImages = False
-Verbosity = 5
+Verbosity = 1
 
 BBox = afwImage.BBox(afwImage.PointI(0, 0), 100, 100)
 
@@ -106,11 +106,14 @@ def makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, outlierRejec
                 psfMatchedExposure.writeFits("psfMatched_%s" % (exposureName,))
 
     clipboard = pexHarness.Clipboard.Clipboard()
-    coadd = clipboard.put(outlierRejectionPolicy.get("inputKeys.exposureList"), psfMatchedExposureList)
+    psfMatchedMaskedImageList = afwImage.vectorMaskedImageF(
+        [e.getMaskedImage() for e in psfMatchedExposureList])
+    clipboard.put(outlierRejectionPolicy.get("inputKeys.maskedImageList"), psfMatchedMaskedImageList)
     outlierRejectionTester.runWorker(clipboard)
-    coadd = clipboard.get(outlierRejectionPolicy.get("outputKeys.coadd"))
+    coaddMaskedImage = clipboard.get(outlierRejectionPolicy.get("outputKeys.coadd"))
+    coaddExposure = afwImage.makeExposure(coaddMaskedImage, referenceExposure.getWcs())
     weightMap = clipboard.get(outlierRejectionPolicy.get("outputKeys.weightMap"))
-    return (coadd, weightMap)
+    return (coaddExposure, weightMap)
 
 if __name__ == "__main__":
     pexLog.Trace.setVerbosity('lsst.coadd', Verbosity)

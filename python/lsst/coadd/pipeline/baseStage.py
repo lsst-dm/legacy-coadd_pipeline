@@ -24,23 +24,25 @@ class ParallelStage(harnessStage.ParallelProcessing):
             self.policy = pexPolicy.Policy()
         self.policy.mergeDefaults(defPolicy.getDictionary())
     
-    def getFromClipboard(self, clipboard, key):
+    def getFromClipboard(self, clipboard, key, doRaise=True):
         """Retrieve an item from the clipboard.
         
         Inputs:
         - clipbaord: the clipboard
         - key: the name of the item; the name of the item on the clipboard is given by:
             self.policy.get("inputKeys." + key)
+        - doRaise: if True then raise KeyError if item is not found on clipboard
+            else return None
         
         @return the item read from the clipboard
-        @raise KeyError or ? if full key is not found in policy or item is not found on clipboard.
+        @raise KeyError if doRaise True and item not found on clipboard
+        @raise lsst.pex.exceptions.LsstCppException wrapping lsst::pex::policy::NameNotFound
+            if full key is not found in policy; this indicates a bug: a mismatch with the stage dictionary.
         """
         policyKey = "inputKeys.%s" % (key,)
         clipboardKey = self.policy.getString(policyKey)
-        if clipboardKey == None:
-            raise KeyError("Could not find %s in policy" % (policyKey,))
         clipboardItem = clipboard.get(clipboardKey)
-        if clipboardItem == None:
+        if clipboardItem == None and doRaise:
             raise KeyError("Could not find %s=%s on clipboard" % (policyKey, clipboardKey))
         return clipboardItem
     
