@@ -381,7 +381,7 @@ definitions: {
             * kernelSumClipping:     true
             * spatialKernelClipping: false"
         maxOccurs: 1
-        default: 0
+        default: 1
     }
     spatialBgOrder: {
         type: int
