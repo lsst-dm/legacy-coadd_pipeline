@@ -67,7 +67,7 @@ class PipeTestCase(unittest.TestCase):
             selectpol.set("exposureDir", datadir)
     
         tester = SimpleStageTester( psfMatchPipe.SelectImagesStage(selectpol) )
-        tester.setDebugVerbosity(3)
+        tester.setDebugVerbosity(5)
         return tester
 
     def _makeRefLoadTester(self, selectpol):
