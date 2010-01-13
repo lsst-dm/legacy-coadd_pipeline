@@ -26,10 +26,24 @@ appStage: {
 }
 
 appStage: {
+    name: "RefSelfBkgdSubtract"
+    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.SelfBkgdSubtract"
+    eventTopic: "None"
+    stagePolicy: "refBkgdSubtract.paf"
+}
+
+appStage: {
     name: "InputExp"
     parallelClass: "lsst.pex.harness.IOStage.InputStageParallel"
     eventTopic: "None"
     stagePolicy: "expImageInput.paf"
+}
+
+appStage: {
+    name: "ExpSelfBkgdSubtract"
+    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.SelfBkgdSubtract"
+    eventTopic: "None"
+    stagePolicy: "expBkgdSubtract.paf"
 }
 
 appStage: {
