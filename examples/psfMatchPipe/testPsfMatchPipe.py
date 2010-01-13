@@ -16,6 +16,9 @@ import lsst.afw.image
 
 datadir = None
 
+class InputStage(phstage.Stage):
+    parallelClass = IOStage.InputStageParallel
+
 class PipeTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -84,8 +87,11 @@ class PipeTestCase(unittest.TestCase):
         inppol = Policy.createPolicy(inppol)
         
         tester = self._makeRefLoadTester(selectpol)
-        tester.addStage(phstage.makeStage(inppol,
-                    paraClsName="lsst.pex.harness.IOStage.InputStageParallel"))
+# bug in pex_harness causes this to fail:
+#        tester.addStage(phstage.makeStage(inppol,
+#                    paraClsName="lsst.pex.harness.IOStage.InputStageParallel"))
+        tester.addStage( InputStage(inppol) )
+
         return tester
 
     def _makePsfMatchTester(self, selectpol):
