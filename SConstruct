@@ -6,7 +6,7 @@ import os.path, re, os
 import lsst.SConsUtils as scons
 
 env = scons.makeEnv("coadd_pipeline",
-                    r"$HeadURL: svn+ssh://svn.lsstcorp.org/DMS/coadd/pipeline/trunk/SConstruct $",
+                    r"$HeadURL$",
                     []
                     )
 #

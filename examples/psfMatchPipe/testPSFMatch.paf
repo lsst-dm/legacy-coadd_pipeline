@@ -1,0 +1,48 @@
+#<?cfg paf policy ?>
+#
+# Pipeline Layer Policy
+#
+
+# executionMode: oneloop
+localLogMode: true
+eventBrokerHost: "lsst8.ncsa.uiuc.edu"
+logThreshold: -3
+
+# receiving an event with this topic name will shut down the pipeline
+shutdownTopic: shutdownPipeline
+   
+appStage: {
+    name: "SelectImages"
+    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.SelectImages"
+    eventTopic: "none"
+    stagePolicy: "testSelectImages.paf"
+}
+
+appStage: {
+    name: "InputRefExp"
+    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.InputRefExp"
+    eventTopic: "None"
+    stagePolicy: "refImageInput.paf"
+}
+
+appStage: {
+    name: "InputExp"
+    parallelClass: "lsst.pex.harness.IOStage.InputStageParallel"
+    eventTopic: "None"
+    stagePolicy: "expImageInput.paf"
+}
+
+appStage: {
+    name: "warpExp"
+    parallelClass: "coadd.pipeline.WarpExposureStage.WarpExposureStageParallel"
+    eventTopic: "None"
+    stagePolicy: "None"
+}
+
+appStage: {
+    name: "psfMatch"
+    parallelClass: "coadd.pipeline.PsfMatchStage.PsfMatchStageParallel"
+    eventTopic: "None"
+    stagePolicy: "None"
+}
+

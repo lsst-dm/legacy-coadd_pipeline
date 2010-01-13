@@ -1,0 +1,15 @@
+#<?cfg paf policy ?>
+#
+AdditionalData: "exposureName=referenceExpName"
+AdditionalData: "dataDir=exposureDir"
+RunMode: "process"
+InputItems: {
+    referenceExposure: {
+        Type: "ExposureF"
+        PythonType: "lsst.afw.image.ExposureF"
+        StoragePolicy: {
+            Storage: "FitsStorage"
+            Location: "%(dataDir)/%(exposureName)"
+        }
+    }
+}

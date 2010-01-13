@@ -4,6 +4,8 @@ setupRequired(afw >= svn12458) # for statistics on a stack
 setupRequired(coadd_chisquared >= svn12575)
 setupRequired(coadd_psfmatched >= svn12573)
 
+setupOptional(coadd_pipeline_data >= 0)
+
 envAppend(LD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 envAppend(DYLD_LIBRARY_PATH, ${PRODUCT_DIR}/lib)
 
