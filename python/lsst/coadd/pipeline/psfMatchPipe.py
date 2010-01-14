@@ -80,10 +80,8 @@ class SelfBkgdSubtract(harnessStage.ParallelProcessing):
     an Exposure and then subtract it.  
     """
     def setup(self):
-        self.log = pexLog.Log(self.log, self.__class__.__name__)
-
         policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", 
-                                                 "selectImages_dict.paf",
+                                                 "selfBkgdSubtract_dict.paf",
                                                  "policy")
         defPolicy = pexPolicy.Policy.createPolicy(policyFile,
                                                   policyFile.getRepositoryPath(),
@@ -92,12 +90,25 @@ class SelfBkgdSubtract(harnessStage.ParallelProcessing):
             self.policy = pexPolicy.Policy()
         self.policy.mergeDefaults(defPolicy.getDictionary())
 
-        self.bgpol = self.policy.get("backgroundPolicy")
-        self.expkey = self.policy.get("inputKeys.exposure")
+        self.expkey = self.policy.get("inputKeys.exposureKey")
 
     def process(self, clipboard):
-        diffimTools.backgroundSubtract(self.bgpol, clipboard.get(self.expkey))
+        diffimTools.backgroundSubtract(self.policy,
+                               [clipboard.get(self.expkey).getMaskedImage()])
 
-class SelfBkgdSubtractClass(harnessStage.Stage):
+class SelfBkgdSubtractStage(harnessStage.Stage):
     parallelClass = SelfBkgdSubtract
+
+class RefSelfBkgdSubtract(SelfBkgdSubtract):
+    def setup(self):
+        self.bgsubtracted = False
+
+    def process(self, clipboard):
+        if not self.bgsubtracted:
+            SelfBkgdSubtract.process(self, clipboard)
+            self.bgsubtracted = True
+
+class RefSelfBkgdSubtractStage(harnessStage.Stage):
+    parallelClass = SelfBkgdSubtract
+
 

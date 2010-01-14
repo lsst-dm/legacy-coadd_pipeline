@@ -1,0 +1,4 @@
+#<?cfg paf policy ?>
+
+# the name for the key holding the exposure to subtract background from
+inputKeys.exposureKey: exposure

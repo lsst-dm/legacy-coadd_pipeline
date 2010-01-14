@@ -27,7 +27,7 @@ appStage: {
 
 appStage: {
     name: "RefSelfBkgdSubtract"
-    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.SelfBkgdSubtract"
+    parallelClass: "lsst.coadd.pipeline.psfMatchPipe.RefSelfBkgdSubtract"
     eventTopic: "None"
     stagePolicy: "refBkgdSubtract.paf"
 }

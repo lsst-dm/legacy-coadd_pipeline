@@ -52,7 +52,7 @@ class PipeTestCase(unittest.TestCase):
                      "exposureDir not set on clipboard")
         self.assertEquals(out["exposureDir"], expd)
 
-    def _makeSelectTester(self, selectpol):
+    def _makeSelectTester(self, selectpol, verb=0):
         if not selectpol.exists("exposureDir"):
             global datadir
             if not datadir:
@@ -67,7 +67,7 @@ class PipeTestCase(unittest.TestCase):
             selectpol.set("exposureDir", datadir)
     
         tester = SimpleStageTester( psfMatchPipe.SelectImagesStage(selectpol) )
-        tester.setDebugVerbosity(5)
+        tester.setDebugVerbosity(verb)
         return tester
 
     def _loadExamplePolicy(self, filename):
@@ -75,23 +75,21 @@ class PipeTestCase(unittest.TestCase):
                                    "examples/psfMatchPipe")
         return Policy.createPolicy(inppol)
 
-    def _makeRefLoadTester(self, selectpol):
+    def _makeRefLoadTester(self, selectpol, verb=0):
         inppol = self._loadExamplePolicy("refImageInput.paf")
-        tester = self._makeSelectTester(selectpol)
+        tester = self._makeSelectTester(selectpol, verb)
         tester.addStage( psfMatchPipe.InputRefExpStage(inppol) )
         return tester
 
-    def _makeRefSubtTester(self):
+    def _makeRefSubtTester(self, selectpol, verb=0):
         inppol = self._loadExamplePolicy("refBkgdSubtract.paf")
-        tester = self._makeRefLoadTester(self, selectpol)
-        tester.addStage( psfMatchPipe.SelfBkgdSubtract(inppol) )
+        tester = self._makeRefLoadTester(selectpol, verb)
+        tester.addStage( psfMatchPipe.SelfBkgdSubtractStage(inppol) )
         return tester
 
-    def _makeExpLoadTester(self, selectpol):
+    def _makeExpLoadTester(self, selectpol, verb=0):
         inppol = self._loadExamplePolicy("expImageInput.paf")
-        inppol = Policy.createPolicy(inppol)
-        
-        tester = self._makeRefSubtTester(selectpol)
+        tester = self._makeRefSubtTester(selectpol, verb)
 # bug in pex_harness causes this to fail:
 #        tester.addStage(phstage.makeStage(inppol,
 #                    paraClsName="lsst.pex.harness.IOStage.InputStageParallel"))
@@ -99,14 +97,14 @@ class PipeTestCase(unittest.TestCase):
 
         return tester
 
-    def _makeExpSubtTester(self):
+    def _makeExpSubtTester(self, selectpol, verb=0):
         inppol = self._loadExamplePolicy("expBkgdSubtract.paf")
-        tester = self._makeExpLoadTester(self, selectpol)
-        tester.addStage( psfMatchPipe.SelfBkgdSubtract(inppol) )
+        tester = self._makeExpLoadTester(selectpol, verb)
+        tester.addStage( psfMatchPipe.SelfBkgdSubtractStage(inppol) )
         return tester
 
-    def _makePsfMatchTester(self, selectpol):
-        tester = self._makeExpSubtTester(selectpol)
+    def _makePsfMatchTester(self, selectpol, verb=0):
+        tester = self._makeExpSubtTester(selectpol, verb)
         tester.addStage( WarpExposureStage(None) )
         tester.addStage( PsfMatchStage(None) )
         return tester
@@ -125,7 +123,7 @@ class PipeTestCase(unittest.TestCase):
 
     def testRefBgSubtract(self):
         selectPolicy = Policy.createPolicy(self.selectPolFile)
-        tester = self._makeRefsubtTester(selectPolicy)
+        tester = self._makeRefSubtTester(selectPolicy)
         clipboard = {}
         out = tester.runWorker(clipboard)
         self.assert_(isinstance(out["referenceExposure"],
@@ -152,7 +150,7 @@ class PipeTestCase(unittest.TestCase):
         run one iteration of the PSFMatch pipeline
         """
         selectPolicy = Policy.createPolicy(self.selectPolFile)
-        tester = self._makePsfMatchTester(selectPolicy)
+        tester = self._makePsfMatchTester(selectPolicy, 5)
         clipboard = {}
         out = tester.runWorker(clipboard)
 

@@ -5,13 +5,15 @@ definitions: {
         type: policy
         description: "the clipboard keys that will accessed by this stage"
         dictionary: {
-           exposure:  {
-               type: "string"
-               description:  "the clipboard key name for the Exposure
-                      to subtract the background from"
-               minOccurs: 1
-               maxOccurs: 1
-               # no default; must be provided
+           definitions: {
+              exposureKey:  {
+                  type: "string"
+                  description:  "the clipboard key name for the Exposure
+                         to subtract the background from"
+                  minOccurs: 1
+                  maxOccurs: 1
+                  # no default; must be provided
+              }
            }
         }
         minOccurs: 1
