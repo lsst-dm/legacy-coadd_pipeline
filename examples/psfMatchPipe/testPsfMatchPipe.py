@@ -70,23 +70,28 @@ class PipeTestCase(unittest.TestCase):
         tester.setDebugVerbosity(5)
         return tester
 
-    def _makeRefLoadTester(self, selectpol):
-        inppol = DefaultPolicyFile("coadd_pipeline", 
-                                   "refImageInput.paf",
+    def _loadExamplePolicy(self, filename):
+        inppol = DefaultPolicyFile("coadd_pipeline", filename, 
                                    "examples/psfMatchPipe")
-        inppol = Policy.createPolicy(inppol)
-        
+        return Policy.createPolicy(inppol)
+
+    def _makeRefLoadTester(self, selectpol):
+        inppol = self._loadExamplePolicy("refImageInput.paf")
         tester = self._makeSelectTester(selectpol)
         tester.addStage( psfMatchPipe.InputRefExpStage(inppol) )
         return tester
 
+    def _makeRefSubtTester(self):
+        inppol = self._loadExamplePolicy("refBkgdSubtract.paf")
+        tester = self._makeRefLoadTester(self, selectpol)
+        tester.addStage( psfMatchPipe.SelfBkgdSubtract(inppol) )
+        return tester
+
     def _makeExpLoadTester(self, selectpol):
-        inppol = DefaultPolicyFile("coadd_pipeline", 
-                                   "expImageInput.paf",
-                                   "examples/psfMatchPipe")
+        inppol = self._loadExamplePolicy("expImageInput.paf")
         inppol = Policy.createPolicy(inppol)
         
-        tester = self._makeRefLoadTester(selectpol)
+        tester = self._makeRefSubtTester(selectpol)
 # bug in pex_harness causes this to fail:
 #        tester.addStage(phstage.makeStage(inppol,
 #                    paraClsName="lsst.pex.harness.IOStage.InputStageParallel"))
@@ -94,8 +99,14 @@ class PipeTestCase(unittest.TestCase):
 
         return tester
 
+    def _makeExpSubtTester(self):
+        inppol = self._loadExamplePolicy("expBkgdSubtract.paf")
+        tester = self._makeExpLoadTester(self, selectpol)
+        tester.addStage( psfMatchPipe.SelfBkgdSubtract(inppol) )
+        return tester
+
     def _makePsfMatchTester(self, selectpol):
-        tester = self._makeExpLoadTester(selectpol)
+        tester = self._makeExpSubtTester(selectpol)
         tester.addStage( WarpExposureStage(None) )
         tester.addStage( PsfMatchStage(None) )
         return tester
@@ -108,6 +119,15 @@ class PipeTestCase(unittest.TestCase):
 
         self.assert_(out.has_key("referenceExposure"),
                      "referenceExposure not set on clipboard")
+        self.assert_(isinstance(out["referenceExposure"],
+                                lsst.afw.image.ExposureF),
+                     "referenceExposure is not an Exposure")
+
+    def testRefBgSubtract(self):
+        selectPolicy = Policy.createPolicy(self.selectPolFile)
+        tester = self._makeRefsubtTester(selectPolicy)
+        clipboard = {}
+        out = tester.runWorker(clipboard)
         self.assert_(isinstance(out["referenceExposure"],
                                 lsst.afw.image.ExposureF),
                      "referenceExposure is not an Exposure")

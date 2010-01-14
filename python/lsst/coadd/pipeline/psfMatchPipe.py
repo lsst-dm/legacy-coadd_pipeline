@@ -3,6 +3,7 @@ import lsst.pex.policy as pexPolicy
 import lsst.pex.harness.stage as harnessStage
 import lsst.pex.harness as pexHarness
 import lsst.pex.harness.IOStage
+import lsst.ip.diffim.diffimTools as diffimTools
 
 class SelectImages(harnessStage.ParallelProcessing):
     """
@@ -71,3 +72,32 @@ class InputRefExp(pexHarness.IOStage.InputStageParallel):
 
 class InputRefExpStage(harnessStage.Stage):
     parallelClass = InputRefExp
+
+
+class SelfBkgdSubtract(harnessStage.ParallelProcessing):
+    """
+    a ParallelProcessing stage component that will estimate the background in 
+    an Exposure and then subtract it.  
+    """
+    def setup(self):
+        self.log = pexLog.Log(self.log, self.__class__.__name__)
+
+        policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", 
+                                                 "selectImages_dict.paf",
+                                                 "policy")
+        defPolicy = pexPolicy.Policy.createPolicy(policyFile,
+                                                  policyFile.getRepositoryPath(),
+                                                  True)
+        if self.policy is None:
+            self.policy = pexPolicy.Policy()
+        self.policy.mergeDefaults(defPolicy.getDictionary())
+
+        self.bgpol = self.policy.get("backgroundPolicy")
+        self.expkey = self.policy.get("inputKeys.exposure")
+
+    def process(self, clipboard):
+        diffimTools.backgroundSubtract(self.bgpol, clipboard.get(self.expkey))
+
+class SelfBkgdSubtractClass(harnessStage.Stage):
+    parallelClass = SelfBkgdSubtract
+
