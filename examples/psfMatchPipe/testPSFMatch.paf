@@ -60,3 +60,10 @@ appStage: {
     stagePolicy: "None"
 }
 
+appStage: {
+    name: "OutputMatchedExp"
+    parallelClass: "lsst.pex.harness.IOStage.OutputStageParallel"
+    eventTopic: "None"
+    stagePolicy: "matchedExpOutput.paf"
+}
+

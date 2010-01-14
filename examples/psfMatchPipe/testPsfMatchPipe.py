@@ -3,8 +3,7 @@
 Tests for components of the PSFMatch pipeline
 """
 
-import os
-import sys
+import os, sys, re
 import unittest
 
 from lsst.coadd.pipeline import psfMatchPipe, WarpExposureStage, PsfMatchStage
@@ -40,6 +39,7 @@ class PipeTestCase(unittest.TestCase):
         rexp = selectPolicy.get("referenceExpName")
         exp1 = selectPolicy.getArray("exposureName")[0]
         expd = selectPolicy.get("exposureDir")
+        mexp = re.sub(r'\.sci$', '.matched', exp1)
 
         keys = out.keys()
         self.assert_("referenceExpName" in keys,
@@ -51,6 +51,9 @@ class PipeTestCase(unittest.TestCase):
         self.assert_("exposureDir" in keys,
                      "exposureDir not set on clipboard")
         self.assertEquals(out["exposureDir"], expd)
+        self.assert_("matchedExpName" in keys,
+                     "matchedExpName not set on clipboard")
+        self.assertEquals(out["matchedExpName"], mexp)
 
     def _makeSelectTester(self, selectpol, verb=0):
         if not selectpol.exists("exposureDir"):

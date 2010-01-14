@@ -11,8 +11,6 @@ class SelectImages(harnessStage.ParallelProcessing):
     the names of the exposures to operate on.  
     """
     def setup(self):
-        self.log = pexLog.Log(self.log, self.__class__.__name__)
-
         policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", 
                                                  "selectImages_dict.paf",
                                                  "policy")
@@ -27,6 +25,7 @@ class SelectImages(harnessStage.ParallelProcessing):
         self.referenceExpName = self.policy.get("referenceExpName")
         self.exposureList = self.policy.getArray("exposureName")
         self.exposureDir = self.policy.get("exposureDir")
+        self.matchedExpDir = self.policy.get("matchedExpDir")
 
     
     def process(self, clipboard):
@@ -37,6 +36,12 @@ class SelectImages(harnessStage.ParallelProcessing):
         clipboard.put("exposureDir", self.exposureDir)
         clipboard.put("referenceExpName", self.referenceExpName)
         clipboard.put("exposureName",self.exposureList[self.nextExposureIdx])
+
+        # output name
+        outname = self.exposureList[self.nextExposureIdx]
+        if outname.endswith(".sci"):
+            outname = outname[:-3] + "matched"
+        clipboard.put("matchedExpName", outname)
         self.nextExposureIdx += 1
 
 class SelectImagesStage(harnessStage.Stage):
@@ -90,7 +95,7 @@ class SelfBkgdSubtract(harnessStage.ParallelProcessing):
             self.policy = pexPolicy.Policy()
         self.policy.mergeDefaults(defPolicy.getDictionary())
 
-        self.expkey = self.policy.get("inputKeys.exposureKey")
+        self.expkey = self.policy.get("inputKeys.exposure")
 
     def process(self, clipboard):
         diffimTools.backgroundSubtract(self.policy,

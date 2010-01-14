@@ -30,4 +30,13 @@ definitions: {
         # there is no default; it must be provided
     }
 
+    matchedExpDir:  {
+        description: "the (possibly templated) path to the directory 
+           to write matched exposures to"
+        type: "string"
+        minOccurs: 0
+        maxOccurs: 1
+        default: "./data"
+    }
+
 }

@@ -6,7 +6,7 @@ definitions: {
         description: "the clipboard keys that will accessed by this stage"
         dictionary: {
            definitions: {
-              exposureKey:  {
+              exposure:  {
                   type: "string"
                   description:  "the clipboard key name for the Exposure
                          to subtract the background from"
