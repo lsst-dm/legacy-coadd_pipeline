@@ -48,7 +48,7 @@ Verbosity = 1
 
 BBox = afwImage.BBox(afwImage.PointI(0, 0), 100, 100)
 
-BackgroundCells = 256
+BackgroundCellSize = 512
 
 def subtractBackground(maskedImage):
     """Subtract the background from a MaskedImage
@@ -58,8 +58,8 @@ def subtractBackground(maskedImage):
     Returns the background object returned by afwMath.makeBackground.
     """
     bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
-    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCells) + 1)
-    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCells) + 1)
+    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCellSize) + 1)
+    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCellSize) + 1)
     bkgControl.sctrl.setNumSigmaClip(3)
     bkgControl.sctrl.setNumIter(3)
 

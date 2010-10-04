@@ -69,7 +69,7 @@ definitions: {
     psfMatchPolicy: {
         description: "Policy to control psf matching."
         type: "policy"
-        dictionary: @psfMatch_dict.paf
+        dictionary: @@coadd_psfmatched:policy/psfMatch_dict.paf
         minOccurs: 1
         maxOccurs: 1
     }

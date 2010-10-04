@@ -62,7 +62,7 @@ definitions: {
     coaddPolicy: {
         description: "Policy to control chi-squared coadd generation."
         type: "policy"
-        dictionary: @ChiSquaredCoadd_dict.paf
+        dictionary: @@coadd_chisquared:policy/ChiSquaredCoadd_dict.paf
         minOccurs: 1
         maxOccurs: 1
     }

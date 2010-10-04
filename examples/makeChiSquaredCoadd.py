@@ -41,7 +41,7 @@ from lsst.pex.harness import Clipboard, simpleStageTester
 
 Verbosity = 5
 
-BackgroundCells = 256
+BackgroundCellSize = 512
 
 def subtractBackground(maskedImage):
     """Subtract the background from a MaskedImage
@@ -51,8 +51,8 @@ def subtractBackground(maskedImage):
     Returns the background object returned by afwMath.makeBackground.
     """
     bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
-    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCells) + 1)
-    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCells) + 1)
+    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCellSize) + 1)
+    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCellSize) + 1)
     bkgControl.sctrl.setNumSigmaClip(3)
     bkgControl.sctrl.setNumIter(3)
 
@@ -152,6 +152,7 @@ where:
         policy = pexPolicy.Policy()
     # remove the following bit once the code uses simpleStageTester
     policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquaredStage_dict.paf", "policy")
+    print "policyFile %s loaded" % (policyFile,)
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
     policy.mergeDefaults(defPolicy)
     
