@@ -85,7 +85,7 @@ where:
   - pathToExposure is the path to an Exposure (without the final _img.fits)
   - the first exposure listed is the reference exposure: all other exposures are warped to match it.
   - empty lines and lines that start with # are ignored.
-- policyPath is the path to a policy file; overrides for policy/warpExposureStage_dict.py
+- policyPath is the path to a policy file; overrides for policy/WarpExposureStageDictionary.py
 """
     if len(sys.argv) not in (2, 3):
         print helpStr
@@ -99,12 +99,11 @@ where:
     else:
         policy = pexPolicy.Policy()
     # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf", "policy")
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "WarpExposureStageDictionary.paf", "policy")
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
     policy.mergeDefaults(defPolicy)
     
     exposurePathList = []
-    ImageSuffix = "_img.fits"
     with file(exposureList, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
@@ -112,9 +111,6 @@ where:
                 continue
             filePath = line
             fileName = os.path.basename(filePath)
-            if not os.path.isfile(filePath + ImageSuffix):
-                print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
-                continue
             exposurePathList.append(filePath)
 
     warpExposures(exposurePathList, policy)

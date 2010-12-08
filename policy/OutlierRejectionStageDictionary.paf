@@ -55,7 +55,7 @@ definitions: {
     outlierRejectionPolicy: {
         description: "Policy to control outlier rejection."
         type: "policy"
-        dictionary: @outlierRejection_dict.paf
+        dictionary: @OutlierRejectionDictionary.paf
         minOccurs: 1
         maxOccurs: 1
     }

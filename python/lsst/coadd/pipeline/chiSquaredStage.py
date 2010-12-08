@@ -22,19 +22,20 @@
 
 from lsst.pex.logging import Log
 import lsst.coadd.chisquared as coaddChiSq
+import lsst.coadd.utils as coaddUtils
 import baseStage
 
 class ChiSquaredStageParallel(baseStage.ParallelStage):
     """
     Pipeline stage to create a chi-squared coadd
 
-    For now, the coadd has the same dimensions and WCS as the first exposure
+    For now, the coadd has the same dimensions, xy0 and WCS as the first exposure
     or the next exposure after processing an event with isLastExposure = True.
     
     The coadd is written to the clipboard when an event is processed with isLastExposure = True.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "chiSquaredStage_dict.paf"
+    policyDictionaryName = "ChiSquaredStageDictionary.paf"
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
@@ -52,10 +53,10 @@ class ChiSquaredStageParallel(baseStage.ParallelStage):
         
         if not self.coadd:
             self.log.log(Log.INFO, "First exposure: create coadd")
-            dimensions = exposure.getMaskedImage().getDimensions()
-            wcs = exposure.getWcs()
-            coaddPolicy = self.policy.get("coaddPolicy")
-            self.coadd = coaddChiSq.Coadd(dimensions, wcs, coaddPolicy)
+            self.coadd = coaddChiSq.Coadd(
+                bbox = coaddUtils.bboxFromImage(exposure),
+                wcs = exposure.getWcs(),
+                allowedMaskPlanes = self.policy.getPolicy("coaddPolicy").get("allowedMaskPlanes"))
 
         self.log.log(Log.INFO, "Add exposure to coadd")
         self.coadd.addExposure(exposure)

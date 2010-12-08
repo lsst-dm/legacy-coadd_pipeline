@@ -41,26 +41,6 @@ from lsst.pex.harness import Clipboard, simpleStageTester
 
 Verbosity = 5
 
-BackgroundCellSize = 512
-
-def subtractBackground(maskedImage):
-    """Subtract the background from a MaskedImage
-    
-    Note: at present the mask and variance are ignored, but they might used be someday.
-    
-    Returns the background object returned by afwMath.makeBackground.
-    """
-    bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
-    bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCellSize) + 1)
-    bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCellSize) + 1)
-    bkgControl.sctrl.setNumSigmaClip(3)
-    bkgControl.sctrl.setNumIter(3)
-
-    image = maskedImage.getImage()
-    bkgObj = afwMath.makeBackground(image, bkgControl)
-    image -= bkgObj.getImageF()
-    return bkgObj
-
 def makeCoadd(exposurePathList, policy):
     """Make a coadd using ChiSquaredStage
     
@@ -90,10 +70,11 @@ def makeCoadd(exposurePathList, policy):
         isLast = (expInd == lastInd)
 
         print "Processing exposure %d of %d: %s" % (expInd+1, lastInd+1, exposurePath)
-        exposure = afwImage.ExposureF(exposurePath)
-
-        print "Subtract background"
-        subtractBackground(exposure.getMaskedImage())
+        try:
+            exposure = afwImage.ExposureF(filePath)
+        except Exception, e:
+            print "Skipping %s: %s" % (filePath, e)
+            continue
 
         # set up the clipboard
         clipboard = pexHarness.Clipboard.Clipboard()
@@ -151,23 +132,18 @@ where:
     else:
         policy = pexPolicy.Policy()
     # remove the following bit once the code uses simpleStageTester
-    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "chiSquaredStage_dict.paf", "policy")
+    policyFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "ChiSquaredStageDictionary.paf", "policy")
     print "policyFile %s loaded" % (policyFile,)
     defPolicy = pexPolicy.Policy.createPolicy(policyFile, policyFile.getRepositoryPath())
     policy.mergeDefaults(defPolicy)
     
     exposurePathList = []
-    ImageSuffix = "_img.fits"
     with file(exposureList, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
             filePath = line
-            fileName = os.path.basename(filePath)
-            if not os.path.isfile(filePath + ImageSuffix):
-                print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
-                continue
             exposurePathList.append(filePath)
 
     coadd, weightMap = makeCoadd(exposurePathList, policy)

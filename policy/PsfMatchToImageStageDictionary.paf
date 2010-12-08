@@ -28,8 +28,6 @@ definitions: {
         minOccurs: 1
         maxOccurs: 1
     }
-    
-    #output clipboard keys:
     outputKeys: {
         description: "Names of output items on the clipboard."
         type: "policy"
@@ -65,11 +63,10 @@ definitions: {
         minOccurs: 1
         maxOccurs: 1
     }
-    
-    psfMatchPolicy: {
+    psfMatchToImagePolicy: {
         description: "Policy to control psf matching."
         type: "policy"
-        dictionary: @@coadd_psfmatched:policy/psfMatch_dict.paf
+        dictionary: @@ip_diffim:policy/PsfMatchingDictionary.paf
         minOccurs: 1
         maxOccurs: 1
     }

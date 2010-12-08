@@ -52,8 +52,8 @@ def subtractBackground(maskedImage):
     bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
     bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCellSize) + 1)
     bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCellSize) + 1)
-    bkgControl.sctrl.setNumSigmaClip(3)
-    bkgControl.sctrl.setNumIter(3)
+    bkgControl.getStatisticsControl().setNumSigmaClip(3)
+    bkgControl.getStatisticsControl().setNumIter(3)
 
     image = maskedImage.getImage()
     bkgObj = afwMath.makeBackground(image, bkgControl)
@@ -121,7 +121,7 @@ where:
         all other exposures are warped and PSF-matched to it.
         Thus the reference exposure should have the worst PSF of the set.
   - empty lines and lines that start with # are ignored.
-- policyPath is the path to a policy file; overrides for policy/psfMatchStage_dict.paf
+- policyPath is the path to a policy file; overrides for ip_diffim policy/PsfMatchToImageStageDictionary.paf
 """
     if len(sys.argv) not in (2, 3):
         print helpStr
@@ -136,7 +136,6 @@ where:
         psfMatchPolicy = pexPolicy.Policy()
     
     exposurePathList = []
-    ImageSuffix = "_img.fits"
     with file(exposureList, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
@@ -144,9 +143,6 @@ where:
                 continue
             filePath = line
             fileName = os.path.basename(filePath)
-            if not os.path.isfile(filePath + ImageSuffix):
-                print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
-                continue
             exposurePathList.append(filePath)
 
     if len(exposurePathList) == 0:
@@ -154,12 +150,12 @@ where:
         sys.exit(0)
 
     # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
-    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf",
+    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "WarpExposureStageDictionary.paf",
         "policy")
     warpExposurePolicy = pexPolicy.Policy.createPolicy(warpExposurePolFile,
         warpExposurePolFile.getRepositoryPath())
 
-    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
+    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "PsfMatchToImageStageDictionary.paf", "policy")
     defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
     psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
     

@@ -20,7 +20,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
-import lsst.coadd.psfmatched as psfMatched
+import lsst.coadd.psfmatched as coaddPsfMatch
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
 import baseStage
@@ -34,12 +34,13 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
     @todo: modify to psf-match one exposure to a psf model instead of another exposure.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "psfMatchStage_dict.paf"
+    policyDictionaryName = "PsfMatchToImageStageDictionary.paf"
     
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
-        self.psfMatchPolicy = self.policy.get("psfMatchPolicy")
+        psfMatchToImagePolicy = self.policy.getPolicy("psfMatchToImagePolicy")
+        self.matcher = coaddPsfMatch.PsfMatchToImage(psfMatchToImagePolicy)
 
     def process(self, clipboard):
         """Psf-match exposure to referenceExposure"""
@@ -50,11 +51,9 @@ class PsfMatchStageParallel(baseStage.ParallelStage):
 
         warpedExposure = self.getFromClipboard(clipboard, "warpedExposure")
         referenceExposure = self.getFromClipboard(clipboard, "referenceExposure")
-
-        psfMatchedMaskedImage, psfMatchingKernel, psfMatchingKernelSum, backgroundModel = \
-            psfMatched.psfMatchMaskedImage(referenceExposure.getMaskedImage(),
-                warpedExposure.getMaskedImage(), self.psfMatchPolicy)
-        psfMatchedExposure = afwImage.makeExposure(psfMatchedMaskedImage, referenceExposure.getWcs())
+        
+        psfMatchedExposure, psfMatchingKernel, psfMatchingKernelSum = self.matcher.matchExposure(
+            warpedExposure, referenceExposure.getMaskedImage())
 
         self.addToClipboard(clipboard, "psfMatchedExposure", psfMatchedExposure)
         self.addToClipboard(clipboard, "psfMatchingKernel", psfMatchingKernel)

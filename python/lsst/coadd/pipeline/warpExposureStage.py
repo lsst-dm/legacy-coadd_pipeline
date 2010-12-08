@@ -29,12 +29,13 @@ class WarpExposureStageParallel(baseStage.ParallelStage):
     """Pipeline stage to warp one exposure to match a reference exposure.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "warpExposureStage_dict.paf"
+    policyDictionaryName = "WarpExposureStageDictionary.paf"
     
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
-        self.warpingKernel = afwMath.makeWarpingKernel(self.policy.get("warpingKernelName"))
+        warpPolicy = self.policy.getPolicy("warpPolicy")
+        self.warper = coaddUtils.Warp.fromPolicy(warpPolicy)
 
     def process(self, clipboard):
         """Warp exposure to referenceExposure"""
@@ -45,9 +46,10 @@ class WarpExposureStageParallel(baseStage.ParallelStage):
 
         exposure = self.getFromClipboard(clipboard, "exposure")
         referenceExposure = self.getFromClipboard(clipboard, "referenceExposure")
-
-        warpedExposure = coaddUtils.makeBlankExposure(referenceExposure)
-        afwMath.warpExposure(warpedExposure, exposure, self.warpingKernel)
+        warpedExposure = self.warper.warpExposure(
+            bbox = coaddUtils.bboxFromImage(referenceExposure),
+            wcs = referenceExposure.getWcs(),
+            exposure = exposure)
 
         self.addToClipboard(clipboard, "warpedExposure", warpedExposure)
         
