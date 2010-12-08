@@ -27,8 +27,6 @@ definitions: {
         minOccurs: 1
         maxOccurs: 1
     }
-    
-    #output clipboard keys:
     outputKeys: {
         description: "Names of output items on the clipboard."
         type: "policy"
@@ -46,27 +44,11 @@ definitions: {
         minOccurs: 1
         maxOccurs: 1
     }
-
-   warpingKernelName: {
-       type: string
-       description: "Warping kernel for warping exposure to match referenceExposure."
-       maxOccurs: 1
-       default: "lanczos4"
-       allowed: {
-           value:        "bilinear"
-           description:  "bilinear interpolation"
-       }
-       allowed: {
-           value:        "lanczos3"
-           description:  "lanczos kernel of order 3"
-       }
-       allowed: {
-           value:        "lanczos4"
-           description:  "lanczos kernel of order 4"
-       }
-       allowed: {
-           value:        "lanczos5"
-           description:  "lanczos kernel of order 5"
-       }
-   }
+    warpPolicy: {
+        description: "Policy to control warping."
+        type: "policy"
+        dictionary: @@coadd_utils:policy/WarpDictionary.paf
+        minOccurs: 1
+        maxOccurs: 1
+    }
 }

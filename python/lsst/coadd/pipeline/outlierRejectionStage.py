@@ -41,7 +41,7 @@ class OutlierRejectionStageParallel(baseStage.ParallelStage):
         so if length = 0 then create a vector of 1.0 else require length to be correct
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "outlierRejectionStage_dict.paf"
+    policyDictionaryName = "OutlierRejectionStageDictionary.paf"
     def process(self, clipboard):
         """Reject outliers"""
 #         print "***** process ******"

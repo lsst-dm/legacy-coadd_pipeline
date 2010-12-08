@@ -60,8 +60,8 @@ def subtractBackground(maskedImage):
     bkgControl = afwMath.BackgroundControl(afwMath.Interpolate.NATURAL_SPLINE)
     bkgControl.setNxSample(int(maskedImage.getWidth() // BackgroundCellSize) + 1)
     bkgControl.setNySample(int(maskedImage.getHeight() // BackgroundCellSize) + 1)
-    bkgControl.sctrl.setNumSigmaClip(3)
-    bkgControl.sctrl.setNumIter(3)
+    bkgControl.getStatisticsControl().setNumSigmaClip(3)
+    bkgControl.getStatisticsControl().setNumIter(3)
 
     image = maskedImage.getImage()
     bkgObj = afwMath.makeBackground(image, bkgControl)
@@ -151,8 +151,9 @@ where:
   - the first exposure listed is the reference exposure:
         its size and WCS are used for the coadd exposure
   - empty lines and lines that start with # are ignored.
-- psfMatchPolicyPath is the path to a policy file; overrides for policy/psfMatchStage_dict.paf
-- outlierRejectionPolicyPath is the path to a policy file; overrides for policy/outlierRejectionStage.paf
+- psfMatchPolicyPath is the path to a policy file; overrides for policy/PsfMatchToImageStageDictionary.paf
+- outlierRejectionPolicyPath is the path to a policy file; overrides for
+    policy/OutlierRejectionStageDictionary.paf
 """
     if len(sys.argv) not in (3, 4):
         print helpStr
@@ -172,11 +173,11 @@ where:
     else:
         psfMatchPolicy = pexPolicy.Policy()
     # There doesn't seem to be a better way to get at the policy dict; it should come from the stage. Sigh.
-    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "warpExposureStage_dict.paf",
+    warpExposurePolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "WarpExposureStageDictionary.paf",
         "policy")
     warpExposurePolicy = pexPolicy.Policy.createPolicy(warpExposurePolFile,
         warpExposurePolFile.getRepositoryPath())
-    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "psfMatchStage_dict.paf", "policy")
+    psfMatchPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "PsfMatchToImageStageDictionary.paf", "policy")
     defPsfMatchPolicy = pexPolicy.Policy.createPolicy(psfMatchPolFile, psfMatchPolFile.getRepositoryPath())
     psfMatchPolicy.mergeDefaults(defPsfMatchPolicy)
 
@@ -185,24 +186,19 @@ where:
         outlierRejectionPolicy = pexPolicy.Policy(outlierRejectionPolicyPath)
     else:
         outlierRejectionPolicy = pexPolicy.Policy()
-    outlierRejectionPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline", "outlierRejectionStage_dict.paf",
-        "policy")
+    outlierRejectionPolFile = pexPolicy.DefaultPolicyFile("coadd_pipeline",
+        "OutlierRejectionStageDictionary.paf", "policy")
     defOutlierRejectionPolicy = pexPolicy.Policy.createPolicy(outlierRejectionPolFile,
         outlierRejectionPolFile.getRepositoryPath())
     outlierRejectionPolicy.mergeDefaults(defOutlierRejectionPolicy)
     
     exposurePathList = []
-    ImageSuffix = "_img.fits"
     with file(psfMatchedExposureList, "rU") as infile:
         for lineNum, line in enumerate(infile):
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
             filePath = line
-            fileName = os.path.basename(filePath)
-            if not os.path.isfile(filePath + ImageSuffix):
-                print "Skipping exposure %s; image file %s not found" % (fileName, filePath + ImageSuffix,)
-                continue
             exposurePathList.append(filePath)
 
     coadd, weightMap = makeCoadd(exposurePathList, warpExposurePolicy, psfMatchPolicy, outlierRejectionPolicy)

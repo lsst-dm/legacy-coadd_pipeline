@@ -20,39 +20,45 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 #
 
+import lsst.coadd.psfmatched as coaddPsfMatch
 import lsst.afw.image as afwImage
 import lsst.afw.math as afwMath
-import lsst.coadd.utils as coaddUtils
 import baseStage
 
-class WarpExposureStageParallel(baseStage.ParallelStage):
-    """Pipeline stage to warp one exposure to match a reference exposure.
+class PsfMatchStageParallel(baseStage.ParallelStage):
+    """
+    Pipeline stage to psf-match one exposure to another.
+    
+    The input exposures must have the same WCS to get reasonable results. This is NOT checked.
+    
+    @todo: modify to psf-match one exposure to a psf model instead of another exposure.
     """
     packageName = "coadd_pipeline"
-    policyDictionaryName = "WarpExposureStageDictionary.paf"
+    policyDictionaryName = "PsfMatchToImageStageDictionary.paf"
     
     def setup(self):
         baseStage.ParallelStage.setup(self)
         
-        warpPolicy = self.policy.getPolicy("warpPolicy")
-        self.warper = coaddUtils.Warp.fromPolicy(warpPolicy)
+        psfMatchToImagePolicy = self.policy.getPolicy("psfMatchToImagePolicy")
+        self.matcher = coaddPsfMatch.PsfMatchToImage(psfMatchToImagePolicy)
 
     def process(self, clipboard):
-        """Warp exposure to referenceExposure"""
+        """Psf-match exposure to referenceExposure"""
 #         print "***** process ******"
 #         print "clipboard keys:"
 #         for key in clipboard.getKeys():
 #             print "*", key
 
-        exposure = self.getFromClipboard(clipboard, "exposure")
+        warpedExposure = self.getFromClipboard(clipboard, "warpedExposure")
         referenceExposure = self.getFromClipboard(clipboard, "referenceExposure")
-        warpedExposure = self.warper.warpExposure(
-            bbox = coaddUtils.bboxFromImage(referenceExposure),
-            wcs = referenceExposure.getWcs(),
-            exposure = exposure)
+        
+        psfMatchedExposure, psfMatchingKernel, psfMatchingKernelSum = self.matcher.matchExposure(
+            warpedExposure, referenceExposure.getMaskedImage())
 
-        self.addToClipboard(clipboard, "warpedExposure", warpedExposure)
+        self.addToClipboard(clipboard, "psfMatchedExposure", psfMatchedExposure)
+        self.addToClipboard(clipboard, "psfMatchingKernel", psfMatchingKernel)
+        self.addToClipboard(clipboard, "psfMatchingKernelSum", psfMatchingKernelSum)
         
 # this is (unfortunately) required by SimpleStageTester; but not by the regular middleware
-class WarpExposureStage(baseStage.Stage):
-    parallelClass = WarpExposureStageParallel
+class PsfMatchStage(baseStage.Stage):
+    parallelClass = PsfMatchStageParallel
