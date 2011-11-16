@@ -1,0 +1,8 @@
+
+# /
+/.scon*
+/config.log
+/*.fits
+
+# /doc/
+/doc/htmlDir
